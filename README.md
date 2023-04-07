@@ -40,7 +40,7 @@ If the transition from the QGP to hadronic matter is smooth, the change of corre
 Near the critical point, if it exists, the correlation length is expected to diverge: checkout [critical opalescence](https://www.youtube.com/watch?v=DIGdbmJvFUw) due to increased correlation length near the critical point.
 
 The fluctuation of the conserved quantities like net-baryon number will be present in its distribution.
-
+![Net-proton distribution](https://github.com/gboon18/STAR/blob/main/images/net-proton_dist.png)
 
 
 ## Detector efficiency correction
