@@ -40,9 +40,35 @@ If the transition from the QGP to hadronic matter is smooth, the change of corre
 Near the critical point, if it exists, the correlation length is expected to diverge: checkout [critical opalescence](https://www.youtube.com/watch?v=DIGdbmJvFUw) due to increased correlation length near the critical point.
 
 The fluctuation of the conserved quantities like net-baryon number will be present in its distribution.
-![Net-proton distribution](https://github.com/gboon18/STAR/blob/main/images/net-proton_dist.png](https://github.com/gboon18/STAR/blob/main/images/net-proton_distribution.png)
+<!--![Net-proton distribution](https://github.com/gboon18/STAR/blob/main/images/net-proton_distribution.png)-->
+<img src="https://github.com/gboon18/STAR/blob/main/images/net-proton_distribution.png" alt="Net-proton distribution" width="700*0.7" height="500*0.7">
+
+- Moment analysis
+The event-by-event distributions of the conserved quantities are characterized by the moments such as mean, standard deviation, skewness, kurtosis, etc.
+The cumulants can be derived from these moments and the higher the order, the more it become sensitive to the distribution.
+In very short, the higher the order, the more it become sensitive to the correlation length and to the phase transition.
+```
+\begin{aligned}
+C_1 &= \left \langle N \right \rangle, \\
+C_2 &= \left \langle \left ( \delta N \right )^2 \right \rangle, \\
+C_3 &= \left \langle \left ( \delta N \right )^3 \right \rangle, \\
+C_4 &= \left \langle \left ( \delta N \right )^4 \right \rangle
+        - 3 \left \langle \left ( \delta N \right )^2 \right \rangle^2, \\
+C_5 &= \left \langle \left ( \delta N \right )^5 \right \rangle
+        - 10 \left \langle \left ( \delta N \right )^2 \right \rangle
+                \left \langle \left ( \delta N \right )^3 \right \rangle, \\
+C_6 &= \left \langle \left ( \delta N \right )^6 \right \rangle
+        + 30 \left \langle \left ( \delta N \right )^2 \right \rangle^3
+            - 15 \left \langle \left ( \delta N \right )^2 \right \rangle
+                    \left \langle \left ( \delta N \right )^4 \right \rangle 
+            - 10 \left \langle \left ( \delta N \right )^3 \right \rangle^2.
+\end{aligned}
+```
 
 
 ## Detector efficiency correction
+In real situation, the detector cannot detect all the particles. That is why we are detecting protons and anti-protons, not neutrons and all other bayrons.
+We take the detector efficiency into account considering that the efficiencies for the generated particles are independent to each other.
+Then we can describe the detector efficiency with binomial distribution.
 
 ## Centrality bin width correction (CBWC)
