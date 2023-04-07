@@ -1,0 +1,4 @@
+CalCum.cpp filter=lfs diff=lfs merge=lfs -text
+CalCum.h filter=lfs diff=lfs merge=lfs -text
+calcum/CalCum.cpp filter=lfs diff=lfs merge=lfs -text
+calcum/CalCum.h filter=lfs diff=lfs merge=lfs -text
