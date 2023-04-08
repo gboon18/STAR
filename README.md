@@ -47,24 +47,24 @@ The fluctuation of the conserved quantities like net-baryon number will be prese
 The event-by-event distributions of the conserved quantities are characterized by the moments such as mean, standard deviation, skewness, kurtosis, etc.
 The cumulants can be derived from these moments and the higher the order, the more it become sensitive to the distribution.
 In very short, the higher the order, the more it become sensitive to the correlation length and to the phase transition.
-```
-\begin{aligned}
-C_1 &= \left \langle N \right \rangle, \\
-C_2 &= \left \langle \left ( \delta N \right )^2 \right \rangle, \\
-C_3 &= \left \langle \left ( \delta N \right )^3 \right \rangle, \\
-C_4 &= \left \langle \left ( \delta N \right )^4 \right \rangle
-        - 3 \left \langle \left ( \delta N \right )^2 \right \rangle^2, \\
-C_5 &= \left \langle \left ( \delta N \right )^5 \right \rangle
-        - 10 \left \langle \left ( \delta N \right )^2 \right \rangle
-                \left \langle \left ( \delta N \right )^3 \right \rangle, \\
-C_6 &= \left \langle \left ( \delta N \right )^6 \right \rangle
-        + 30 \left \langle \left ( \delta N \right )^2 \right \rangle^3
-            - 15 \left \langle \left ( \delta N \right )^2 \right \rangle
-                    \left \langle \left ( \delta N \right )^4 \right \rangle 
-            - 10 \left \langle \left ( \delta N \right )^3 \right \rangle^2.
-\end{aligned}
-```
 
+$$ 
+\begin{align} 
+        C_1 &= \left \langle N \right \rangle, \\ 
+        C_2 &= \left \langle \left ( \delta N \right )^2 \right \rangle, \\ 
+        C_3 &= \left \langle \left ( \delta N \right )^3 \right \rangle, \\ 
+        C_4 &= \left \langle \left ( \delta N \right )^4 \right \rangle
+                - 3 \left \langle \left ( \delta N \right )^2 \right \rangle^2, \\ 
+        C_5 &= \left \langle \left ( \delta N \right )^5 \right \rangle
+                - 10 \left \langle \left ( \delta N \right )^2 \right \rangle
+                        \left \langle \left ( \delta N \right )^3 \right \rangle, \\ 
+        C_6 &= \left \langle \left ( \delta N \right )^6 \right \rangle
+                + 30 \left \langle \left ( \delta N \right )^2 \right \rangle^3
+                    - 15 \left \langle \left ( \delta N \right )^2 \right \rangle
+                            \left \langle \left ( \delta N \right )^4 \right \rangle 
+                    - 10 \left \langle \left ( \delta N \right )^3 \right \rangle^2.
+\end{align}
+$$
 
 ## Detector efficiency correction
 In real situation, the detector cannot detect all the particles. That is why we are detecting protons and anti-protons, not neutrons and all other bayrons.
