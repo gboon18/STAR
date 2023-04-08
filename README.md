@@ -1,5 +1,15 @@
-# STAR Zr+Zr and Ru+Ru collisions data analysis
+# STAR Zr+Zr and Ru+Ru collisions (at $\sqrt{s_{NN}} = 200 GeV$) of data analysis
 ## Collision event-by-event net-proton number fluctuation analysis code.
+Thousands of particle produced in the collisions $\rightarrow$ statistical mechanics.\
+Our detector is detecting a part of the phase space $\rightarrow$ Grand Canonical Ensemble
+Grand particion function looks like: $lnZ^{GCE}(T,V,\mu) = ln\left [ \sum_N e^{\mu N / T} Z^{CE} (T, V, N) \right ] $, where $T$ is the temperature, $V$ is the volume, and $\mu$ is the chemical potential. \
+Cumulant generating function $G_n(t) = ln\left \langle e^{tN} \right \rangle = \sum_{n=1}^{\infty} C_n \frac{t^n}{n!}$, where $C_n$ is the n-th order cumulant. \
+Then the relation between the Grand partition function and the cumulants can be written as $C_n \propto \frac{\partial \left ( ln Z^{GCE} \right )}{\partial \mu^n} $. \
+Therefore, cumulants measure chemical potential derivatives of the equation of state.
+- Susceptibility: charactrize the response of the system (in this case especially, baryonic chemical potential)
+- Cumulants: measure statistical properties of the probability distribution: describe fluctuations and correlations in conserved quantities in the system (in this case especially, net-baryon/proton number)
+
+Let's calculation net-proton number cumulants and go through how we correct the inefficiency of the detector and estimate the statistical uncertainties of the observables.
 
 ## Table of contents
 
@@ -28,6 +38,7 @@ After the calculations are don in [calcum](https://github.com/gboon18/STAR/tree/
 
 
 ## Net-proton number fluctuation
+- moments analysis of the probability distribution
 To study the thermodynamic properties of the matter, hadronic matter and Quark Gluon Plasma (QGP), formed in the heavy-ion collisions, we do fluctuation analysis. In this particular case, net-proton number analysis.
 It is a proxy to the net-baryon number which is an collision event-by-event conserved quantity.
 The fluctuation of this conserved quantity arises due to the underlying interaction and statistical nature of the interaction (partonic and/or hadronic) of the particles.
@@ -70,5 +81,8 @@ $$
 In real situation, the detector cannot detect all the particles. That is why we are detecting protons and anti-protons, not neutrons and all other bayrons.
 We take the detector efficiency into account considering that the efficiencies for the generated particles are independent to each other.
 Then we can describe the detector efficiency with binomial distribution.
+
+## Statistical uncertainty
+We use delta theorem to estimate the statistical uncertainty
 
 ## Centrality bin width correction (CBWC)
