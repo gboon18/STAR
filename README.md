@@ -116,10 +116,6 @@ This method is called the centrality bin width correction (CBWC).
 
 ## Results
 
-<img src="https://github.com/gboon18/STAR/blob/main/images/money_plot.png" alt="Net-proton cumulant ratios" width="900" height="300">
-We have put the high-order cumulant ratios $C_4/C_2$, $C_5/C_1$, and $C_6/C_2$ of the p+p, isobars (this analysis), and Au+Au.
-The different collision system show decreasing trends as the multiplicity increased, except the $𝐶_5∕𝐶_1$ of the Zr+Zr collisions which showed no correlation with the multiplicity within the standard deviation of the first order polynomial function fit on the data.
-
-The QCD-based functional renormalization group mode (FRG) and Lattice Gauge Theory (LGT) calculations show consistent results with the most central collision
-centrality of the heavy-ion collisions, except the $𝐶_5∕𝐶_1$ and $𝐶_6∕𝐶_2$ of the Zr+Zr collisions which were compatible with zero with 90% and 88% confidence level, respectively. 
-
+<img src="https://github.com/gboon18/STAR/blob/main/images/money_plot.png" alt="Net-proton cumulant ratios" width="900" height="300"> 
+We have put the high-order cumulant ratios $C_4/C_2$, $C_5/C_1$, and $C_6/C_2$ of the p+p, isobars (this analysis), and Au+Au. The different collision system show decreasing trends as the multiplicity increased, except the $𝐶_5∕𝐶_1$ of the Zr+Zr collisions which showed no correlation with the multiplicity within the standard deviation of the first order polynomial function fit on the data. 
+The QCD-based functional renormalization group mode (FRG) and Lattice Gauge Theory (LGT) calculations show consistent results with the most central collision centrality of the heavy-ion collisions, except the $𝐶_5∕𝐶_1$ and $𝐶_6∕𝐶_2$ of the Zr+Zr collisions which were compatible with zero with 90% and 88% confidence level, respectively. 
