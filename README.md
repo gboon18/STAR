@@ -83,10 +83,29 @@ We take the detector efficiency into account considering that the efficiencies f
 Then we can describe the detector efficiency with binomial distribution.
 This binomial assumption is applicable if we segment the acceptance of the detector as finely as we can.
 Say we have a probability of $p$ to detect a particle every single time.
-Then, the distribution of $n$ number of detected particles $\bar{P}(n)$ will be is: $\bar{P}(n) = \sum_N P(N) B_{p,N}(n)$,\
+Then, the distribution of $n$ number of detected particles $\widetilde{P}(n)$ will be is: $\bar{P}(n) = \sum_N P(N) B_{p,N}(n)$,\
 where $P(N)$ is the distribution of a $N$ number of particles and $B_{p,N}(n)$ represents the binomial distribution: $\frac{N!}{n!(N-n)!}p^n(1-p)^{N-n}$.
 
 ## Statistical uncertainty
-We use delta theorem to estimate the statistical uncertainty
+We use delta theorem to estimate the statistical uncertainty.
+The Delta theroem builds off of the central limit theorem and allows us to approximate the uncertainty when direct calculation of statistical uncertainty is not feasible.
+Central limit theorem states: a random sample $\{  X_1,...,X_n \}$ of size $n$, where $n$ is a sequence of indentically distributed random variables from a distribution of expected value given by $\mu$ and $\sigma^2 (< \infty)$. As the sample number goes to infinity, the difference between sample average $\bar{X}$ and $\mu$ approximate to a normal distribution with mean 0 and variance $n$.
+
+$$
+\sqrt{n} \left ( \bar{X} - \mu \right ) \rightarrow N \left (0, \sigma^2 \right ) \
+$$
+
+Building off from the central limit theorem, the Delta theorem states: If there is a sequence of random variables $X_n$ satisfying the central limit theorem, any function of sample average $g(\bar{x})$ can be expressed as normal distribution. 
+
+$$
+\sqrt{n} \left ( \bar{g(X)} - g(\mu) \right ) \rightarrow N \left (0, \sigma^2 \cdot g'(\mu)^2 \right ) \
+$$
+
+This is the first-order Taylor expansion of $g$ around the $\mu$.
 
 ## Centrality bin width correction (CBWC)
+The multiplicity-bin-by-bin resolution of the cumulants and ratios can be low due to low statistics in high order of cumulants.
+We can merge the multiplicity bins into several collision centrality classes (0-5%, 5-10%, 10-20%, 20-30%,..., 70-80%) depending on the number of produced particles (multiplicity) in the event.
+During merging the bins, we assign weight to the observables so that the signals don't get lost.
+This method is called the centrality bin width correction (CBWC).
+
