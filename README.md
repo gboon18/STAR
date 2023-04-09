@@ -34,7 +34,7 @@ then run
 ./Cum.sh
 ```
 
-After the calculations are don in [calcum](https://github.com/gboon18/STAR/tree/main/calcum) directory, we move to the plot directory to plot the results.
+After the calculations are done in [calcum](https://github.com/gboon18/STAR/tree/main/calcum) directory, we move to the plot directory to plot the results.
 
 
 ## Net-proton number fluctuation
@@ -81,6 +81,10 @@ $$
 In real situation, the detector cannot detect all the particles. That is why we are detecting protons and anti-protons, not neutrons and all other bayrons.
 We take the detector efficiency into account considering that the efficiencies for the generated particles are independent to each other.
 Then we can describe the detector efficiency with binomial distribution.
+This binomial assumption is applicable if we segment the acceptance of the detector as finely as we can.
+Say we have a probability of $p$ to detect a particle every single time.
+Then, the distribution of $n$ number of detected particles $\bar{P}(n)$ will be is: $\bar{P}(n) = \sum_N P(N) B_{p,N}(n)$,\
+where $P(N)$ is the distribution of a $N$ number of particles and $B_{p,N}(n)$ represents the binomial distribution: $\frac{N!}{n!(N-n)!}p^n(1-p)^{N-n}$.
 
 ## Statistical uncertainty
 We use delta theorem to estimate the statistical uncertainty
