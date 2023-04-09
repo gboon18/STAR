@@ -6,8 +6,9 @@ LDFLAGS = $(shell root-config --cflags --libs)
 all:
 	@echo "Please give an option."
 cum:
+	@mkdir output/
 	@g++ -Wall -std=c++11 -o eff_cbwc_main eff_cbwc_main.cpp Cum.cpp CalCum.cpp `root-config --libs --cflags`
 
 clean:
-	@rm eff_cbwc_main
+	@rm -rf eff_cbwc_main output/
 
