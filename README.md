@@ -3,7 +3,7 @@
 Thousands of particle produced in the collisions $\rightarrow$ statistical mechanics.\
 Our detector is detecting a part of the phase space $\rightarrow$ Grand Canonical Ensemble
 Grand particion function looks like: $lnZ^{GCE}(T,V,\mu) = ln\left [ \sum_N e^{\mu N / T} Z^{CE} (T, V, N) \right ] $, where $T$ is the temperature, $V$ is the volume, and $\mu$ is the chemical potential. \
-Cumulant generating function $G_n(t) = ln\left \langle e^{tN} \right \rangle = \sum_{n=1}^{\infty} C_n \frac{t^n}{n!}$, where $C_n$ is the n-th order cumulant. \
+Cumulant generating function $G_n(t) = ln\left \langle e^{tN} \right \rangle = \sum_{n=1} C_n \frac{t^n}{n!}$, where $C_n$ is the n-th order cumulant. \
 Then the relation between the Grand partition function and the cumulants can be written as $C_n \propto \frac{\partial \left ( ln Z^{GCE} \right )}{\partial \mu^n} $. \
 Therefore, cumulants measure chemical potential derivatives of the equation of state.
 - Susceptibility: charactrize the response of the system (in this case especially, baryonic chemical potential)
