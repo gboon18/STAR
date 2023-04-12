@@ -27,6 +27,10 @@ You can use Docker image.
 ```
 docker pull gboon18/cern_root_v6_22_06
 ```
+For example, you can run the analysis code with the docker CERN ROOT image as
+```
+docker run -it --entrypoint /bin/bash -v /path/to/STAR/analysis/codes_data:/path/to/desired/dir/in/container gboon18/cern_root_v6_22_06 
+```
 
 At this stage, we have collected proton and anti-proton tracks from the STAR detector at the Relativisitic Heavy-Ion Collider at Brookhaven National Laboratory.
 We have taken into account the particle track detection efficiency.
@@ -34,12 +38,12 @@ The calculations are done in [calcum](https://github.com/gboon18/STAR/tree/main/
 The CalCum.cpp calculates the cumulants up to the sixth order.
 Cum.cpp fills the cumculants to the histogram in the event multiplicity bin and merge the multiplicity bins to several centrality with the centrality bin widht correction (CWBC).
 The plottings are done in [plot](https://github.com/gboon18/STAR/tree/main/plot) directory.
-First, let's clone the code 
-```sh
+First, let's clone the code. If you are using the docker image, git clone first then run the docker image.
+```
 git clone https://github.com/gboon18/STAR.git
 ```
 then run
-```sh
+```
 ./playme.sh
 ```
 
