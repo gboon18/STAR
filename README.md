@@ -39,6 +39,7 @@ The CalCum.cpp calculates the cumulants up to the sixth order.
 Cum.cpp fills the cumculants to the histogram in the event multiplicity bin and merge the multiplicity bins to several centrality with the centrality bin widht correction (CWBC).
 The plottings are done in [plot](https://github.com/gboon18/STAR/tree/main/plot) directory.
 First, let's clone the code. If you are using the docker image, git clone first then run the docker image.
+The calcum/CalCum.cpp is larger than 100 MB. To clone it, you would need Git LFS ([Large File Storage](https://git-lfs.com)).
 ```
 git clone https://github.com/gboon18/STAR.git
 ```
