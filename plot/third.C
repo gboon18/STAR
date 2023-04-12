@@ -1410,10 +1410,10 @@ void third(int merge_counter = 4, bool scale = true){
   leg_fit->Draw("same");
 
   if(!scale){
-    c_CR_3tot_pad->Print(Form("./output/pics/money_plot_fit_std.png"));
+    c_CR_3tot_pad->Print(Form("./output/pics/final_plot_fit_std_noscale.png"));
   }
   else{
-    c_CR_3tot_pad->Print(Form("./output/pics/money_plot_fit_std.png"));
+    c_CR_3tot_pad->Print(Form("./output/pics/final_plot_fit_std.png"));
   }
   
   
@@ -1782,12 +1782,12 @@ void third(int merge_counter = 4, bool scale = true){
   
   
   if(!scale){
-    c_CR_3tot_pad_2->Print("./output/pics/money_plot_noscale.pdf");
-    c_CR_3tot_pad_2->Print("./output/pics/money_plot_noscale.png");
+    c_CR_3tot_pad_2->Print("./output/pics/final_plot_noscale.pdf");
+    c_CR_3tot_pad_2->Print("./output/pics/final_plot_noscale.png");
   }
   else {
-    c_CR_3tot_pad_2->Print("./output/pics/money_plot.pdf");
-    c_CR_3tot_pad_2->Print("./output/pics/money_plot.png");
+    c_CR_3tot_pad_2->Print("./output/pics/final_plot.pdf");
+    c_CR_3tot_pad_2->Print("./output/pics/final_plot.png");
   }
     
   c_buff->Clear();  delete c_buff;
