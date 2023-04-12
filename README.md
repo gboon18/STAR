@@ -51,7 +51,7 @@ After the calculations are done in [calcum](https://github.com/gboon18/STAR/tree
 If you are a Linux, Ubuntu, or Mac user, a directory containing the plots afer the run will popup.
 
 ## Net-proton number fluctuation
-- moments analysis of the probability distribution
+- Moment analysis of the probability distribution
 To study the thermodynamic properties of the matter, hadronic matter and Quark Gluon Plasma (QGP), formed in the heavy-ion collisions, we do fluctuation analysis. In this particular case, net-proton number analysis.
 It is a proxy to the net-baryon number which is an collision event-by-event conserved quantity.
 The fluctuation of this conserved quantity arises due to the underlying interaction and statistical nature of the interaction (partonic and/or hadronic) of the particles.
