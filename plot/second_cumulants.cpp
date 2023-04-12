@@ -772,6 +772,6 @@ void second_cumulants(){
   
   p_cr32->cd();
 
-  c_cr_2->Print("output/pics/c_cr_with_urqmd_2.png");
+  c_cr_2->Print("output/pics/cumulant_ratios.png");
 
 }
