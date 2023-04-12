@@ -1347,7 +1347,7 @@ void sys_cum(){
   p_c4->cd();
   l_c4_1->Draw("same");
 
-  c_c_pad->Print("output/pics/c_c_pad.pdf");
+  c_c_pad->Print("output/pics/cumulants.pdf");
   
 
   TFile *f_npart = new TFile(Form("output/files/cum_npart_%d.root",mergedN), "recreate");
