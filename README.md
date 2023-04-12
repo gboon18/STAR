@@ -14,9 +14,12 @@ Let's calculation net-proton number cumulants and go through how we correct the 
 ## Table of contents
 
 - [Quick start](#quick-start)
-- [Net-proton number fluctuation] (#net-proton-number-fluctuation)
-- [Detector efficiency correction] (#detector-efficiency-correction)
-- [Centrality bin width correction] (#centrality-bin-width-correction)
+- [Net-proton number fluctuation](#net-proton-number-fluctuation)
+- [Motivation of this analysis](#motivation-of-this-analysis)
+- [Detector efficiency correction](#detector-efficiency-correction)
+- [Statistical uncertainty](#statistical-uncertainty)
+- [Centrality bin width correction](#centrality-bin-width-correction)
+- [Results](#results)
 
 ## Quick start
 This program requires c++11 and CERN ROOT [v6.22/06](https://root.cern/releases/release-62206/).
@@ -36,7 +39,6 @@ then run
 
 After the calculations are done in [calcum](https://github.com/gboon18/STAR/tree/main/calcum) directory, we move to the [plot](https://github.com/gboon18/STAR/tree/main/plot) directory to plot the results.
 If you are a Linux, Ubuntu, or Mac user, a directory containing the plots afer the run will popup.
-
 
 ## Net-proton number fluctuation
 - moments analysis of the probability distribution
@@ -108,14 +110,13 @@ $$
 
 This is the first-order Taylor expansion of $g$ around the $\mu$.
 
-## Centrality bin width correction (CBWC)
+## Centrality bin width correction
 The multiplicity-bin-by-bin resolution of the cumulants and ratios can be low due to low statistics in high order of cumulants.
 We can merge the multiplicity bins into several collision centrality classes (0-5%, 5-10%, 10-20%, 20-30%,..., 70-80%) depending on the number of produced particles (multiplicity) in the event.
 During merging the bins, we assign weight to the observables so that the signals don't get lost.
 This method is called the centrality bin width correction (CBWC).
 
 ## Results
-
 <img src="https://github.com/gboon18/STAR/blob/main/images/money_plot.png" alt="Net-proton cumulant ratios" width="900" height="300"> 
 We have put the high-order cumulant ratios $C_4/C_2$, $C_5/C_1$, and $C_6/C_2$ of the p+p, isobars (this analysis), and Au+Au. The different collision system show decreasing trends as the multiplicity increased, except the $𝐶_5∕𝐶_1$ of the Zr+Zr collisions which showed no correlation with the multiplicity within the standard deviation of the first order polynomial function fit on the data. 
 The QCD-based functional renormalization group mode (FRG) and Lattice Gauge Theory (LGT) calculations show consistent results with the most central collision centrality of the heavy-ion collisions, except the $𝐶_5∕𝐶_1$ and $𝐶_6∕𝐶_2$ of the Zr+Zr collisions which were compatible with zero with 90% and 88% confidence level, respectively. 
