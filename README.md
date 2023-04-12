@@ -46,6 +46,8 @@ then run
 ```
 ./playme.sh
 ```
+The output files (in TROOT format) are saved in calcum/output/.
+The output plots (in png and pdf format) are saved in plot/output/pics/.
 
 After the calculations are done in [calcum](https://github.com/gboon18/STAR/tree/main/calcum) directory, we move to the [plot](https://github.com/gboon18/STAR/tree/main/plot) directory to plot the results.
 If you are a Linux, Ubuntu, or Mac user, a directory containing the plots afer the run will popup.
