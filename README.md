@@ -108,17 +108,25 @@ where $P(N)$ is the distribution of a $N$ number of particles and $B_{p,N}(n)$ r
 
 ## Statistical uncertainty
 In this analysis, we use the Delta theorem to estimate the statistical uncertainty. 
-The Delta theorem builds off of the Central Limit Theorem (CLT) and allows us to approximate the uncertainty when direct calculation of statistical uncertainty is not feasible.\\
-\textbf{Central Limit Theorem:}\\
+The Delta theorem builds off of the Central Limit Theorem (CLT) and allows us to approximate the uncertainty when direct calculation of statistical uncertainty is not feasible.\
+\textbf{Central Limit Theorem:}\
 Let's have a random sample $X_1,...,X_n$ of size $n$, where $n$ is a sequence of identically distributed random variables from a distribution of expected value given by $\mu$ and $\sigma^2~(<\infty)$.
 As the sample number goes to infinity, the difference between sample average $\overline{X}$ and $\mu$ approximate to a normal distribution with mean $0$ and variance $n$.
+
+$$
 \begin{equation}
     \sqrt{n} \left ( \overline{X} - \mu \right ) \rightarrow N \left ( 0, \sigma^2 \right ).
 \end{equation}
+$$
+
 Building off from the CLT, the Delta theorem states that if there is a sequence of random variables $X_n$, satisfying the CLT, any function of sample average $g(\overline{x})$ can be expressed as normal distribution.
+
+$$
 \begin{equation}
 \sqrt{n} \left ( g(\overline{X})-g(\mu) \right ) \rightarrow N \left ( 0, \sigma^2 \cdot g'\left ( \mu \right )^2 \right ),
 \end{equation}
+$$
+
 where $g(\overline{X})$ is a function of the sample average $\overline{X}$, and $g'(\mu)$ represents the first derivative of the function $g$ evaluated at the expected value $\mu$. As $n$ approaches infinity, the distribution of $\sqrt{n} \left ( g(\overline{X})-g(\mu) \right )$ converges to a normal distribution with mean $0$ and variance $\sigma^2 \cdot g'(\mu)^2$.
 
 ## Centrality bin width correction
