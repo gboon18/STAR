@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<job name="isobar200GeV_cum" maxFilesPerProcess="20" softLimits="false" simulateSubmission="false">
+  <stdout discard="true" />
+  
+  <stderr URL="file:&logDir;/$JOBID.err"/>
+  <stdout URL="file:&logDir;/$JOBID.out"/>
+  <stdout URL="file:&logDir;/$JOBID.log"/>
+
+
+  <command>
+    ./Merge_ref3StPicoEvt_corr_Zr.py &dca_cut; &nhitsfit_cut; &nsp_cut; &m2low_cut; &m2up_cut; &ptmax_cut; &ymax_cut; &detefflow_err; &deteffhigh_err;
+  </command> 
+
+  <SandBox installer="ZIP">
+    <Package>
+      <File>file:./Merge_ref3StPicoEvt_corr_Zr.py</File>
+      <File>file:./haddDone.py</File>
+      <File>file:./Zr_GoodRunNumbers.list</File>
+      <File>file:./Analysis_ref3StPicoEvt_corr_Zr.xml</File>    <!-- Only so we can print it out ... done above -->
+    </Package>
+  </SandBox>
+
+
+  <Generator>
+    <Location>&schedDir;</Location>
+    <ReportLocation>&schedDir;</ReportLocation>
+  </Generator>
+</job>

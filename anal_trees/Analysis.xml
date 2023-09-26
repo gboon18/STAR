@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<job name="isobar200GeV_cum" maxFilesPerProcess="20" softLimits="false" simulateSubmission="false">
+  <stdout discard="true" />
+
+  
+  <stderr URL="file:&logDir;/$JOBID.err"/>
+  <stdout URL="file:&logDir;/$JOBID.out"/>
+  <stdout URL="file:&logDir;/$JOBID.log"/>
+
+  <command>
+    make eff
+    ./eff_main job/Data/&runNo;/file.list &dca_cut; &nhitsfit_cut; &nsp_cut; &m2low_cut; &m2up_cut; &ptmax_cut; &ymax_cut; &detefflow_err; &deteffhigh_err; 0
+  </command> 
+
+  <SandBox installer="ZIP">
+    <Package>
+      <File>file:./job/Data/&runNo;/file.list</File>
+      <File>file:./Makefile</File>
+      <File>file:./eff_main.cpp</File>
+      <File>file:./Mean.cpp</File>
+      <File>file:./Mean.h</File>
+      <File>file:./StDetectorEfficiency.cpp</File>
+      <File>file:./StDetectorEfficiency.h</File>
+      <File>file:./RunNo.h</File>
+      <File>file:./multCorr</File>
+      <File>file:./pileup</File>
+      <File>file:./Analysis.xml</File>    <!-- Only so we can print it out ... done above -->
+    </Package>
+  </SandBox>
+
+
+  <Generator>
+    <Location>&schedDir;</Location>
+    <ReportLocation>&schedDir;</ReportLocation>
+  </Generator>
+</job>

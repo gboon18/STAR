@@ -1,0 +1,378 @@
+#ifndef STAR_picoMaker
+#define STAR_picoMaker
+#include "StMaker.h"
+#include "StarClassLibrary/StThreeVectorF.hh"
+#include "StarClassLibrary/StThreeVectorD.hh"
+#include "TString.h"
+#include "TVector3.h"
+
+/* #include "../StDetectorEfficiency/StDetectorEfficiency.h" */
+
+class StPicoBTofPidTraits;
+class StPicoDst;
+class StPicoTrack;
+class StPicoEvent;
+class StPicoDstMaker;
+class StEpdUtil;
+class TFile;
+class TCutG;
+class TH1D;
+class TH2D;
+class TH3D;
+class TTree;
+class TProfile;
+class TDirectory;
+
+class StQAMaker : public StMaker {
+public:
+  StQAMaker(const char *name, StPicoDstMaker *picoMaker, const char *outName = "qa", const char *jobID = "01");
+  virtual ~StQAMaker();
+
+  virtual int Init();
+  virtual int Make();
+  virtual void  Clear(Option_t *opt="");
+  virtual int Finish();
+private:
+  StPicoDstMaker *mPicoDstMaker;
+  StPicoDst      *mPicoDst;
+  StPicoEvent    *mPicoEvent;
+  StPicoTrack    *mPicoTrack;
+
+  /* StDetectorEfficiency *mDetectorEfficiency; */
+  /* int dete_load=0; */
+
+  int CurrRun=0;
+  int EventID=0;
+
+  TString mOutputName;
+  TFile *outfile;
+  // TString OutDir;
+  const char* OutDir;
+
+  TString mOutputName_hist;
+  TFile *outfile_hist;
+  const char* OutDir_hist;
+
+  string NameRuZr;
+  TString mMeanName;
+  
+  TFile *f_mult_cut;
+  TCutG *cut_ref3_ru;
+  TCutG *cut_epd_ru;
+  TCutG *cut_ref3_zr;
+  TCutG *cut_epd_zr;
+  TFile *f_mult_cut_add1;
+  TCutG *cut_ref3_add1;
+  TCutG *cut_epd_add1;
+
+  //Save
+  const int maxMult = 800;//EPD
+
+  //event level
+  TH1D *h1_NoEvt;
+  TH1D *h1_TPCvz_noCut;
+  TH1D *h1_TPCvz_Cut;
+  TH2D *h2_TPCvxy_noCut;
+  TH2D *h2_TPCvxy_Cut;
+  TH1D *h_TPC_VPD_vz_noCut;
+  TH1D *h_TPC_VPD_vz_Cut;
+
+  //22122021(start)
+  //RefStPicoEvt
+  TH2D *h2_refMultStPicoEvtbTOFmatch_raw;
+  TH2D *h2_refMultStPicoEvtbTOFmatch_cut;
+  TH2D *h2_refMultStPicoEvtbTOFmatch_cut1_1;
+  TH2D *h2_refMultStPicoEvtbTOFmatch_cut1_2;
+
+  TH2D *h2_refMultStPicoEvt_ZDCx;
+  TH2D *h2_refMultStPicoEvt_vz;
+  //22122021(finish)
+
+  //Ref3StPicoEvt
+  TH2D *h2_refMult3StPicoEvtbTOFmatch_raw;
+  TH2D *h2_refMult3StPicoEvtbTOFmatch_cut;
+  TH2D *h2_refMult3StPicoEvtbTOFmatch_cut1_1;
+  TH2D *h2_refMult3StPicoEvtbTOFmatch_cut1_2;
+
+  TH2D *h2_refMult3StPicoEvt_ZDCx;
+  TH2D *h2_refMult3StPicoEvtCorr_ZDCx;
+  TH2D *h2_refMult3StPicoEvt_vz;
+  TH2D *h2_refMult3StPicoEvtCorr_vz;
+
+  //EPD
+  TH2D *h2_EpdMIPbTOFmatch_raw;
+  TH2D *h2_EpdMIPbTOFmatch_cut;
+  TH2D *h2_EpdMIPbTOFmatch_cut1_1;
+  TH2D *h2_EpdMIPbTOFmatch_cut1_2;
+
+  //EPD vs Ref3StPicoEvt
+  TH2D *h2_EpdMIPrefMult3StPicoEvt_raw;
+  TH2D *h2_EpdMIPrefMult3StPicoEvt_cut;
+  TH2D *h2_EpdMIPrefMult3StPicoEvt_cut1_1;
+  TH2D *h2_EpdMIPrefMult3StPicoEvt_cut1_2;
+
+  //22122021(start)
+  //EPD vs RefStPicoEvt
+  TH2D *h2_EpdMIPrefMultStPicoEvt_raw;
+  TH2D *h2_EpdMIPrefMultStPicoEvt_cut;
+  TH2D *h2_EpdMIPrefMultStPicoEvt_cut1_1;
+  TH2D *h2_EpdMIPrefMultStPicoEvt_cut1_2;
+  //22122021(finish)
+
+  //22122021(start)
+  TH2D *h2_refMult3StPicoEvtrefMultStPicoEvt_raw;
+  TH2D *h2_refMult3StPicoEvtrefMultStPicoEvt_cut;
+  TH2D *h2_refMult3StPicoEvtrefMultStPicoEvt_cut1_1;
+  TH2D *h2_refMult3StPicoEvtrefMultStPicoEvt_cut1_2;
+  //22122021(finish)
+
+  //Ref3StPicoEvt vs beta_eta1 
+  TH2D *h2_refMult3StPicoEvtbetaeta_raw;
+  TH2D *h2_refMult3StPicoEvtbetaeta_cut;
+
+  //02022022(start)
+  TH2D *h2_refMult3StPicoEvt_tofmatch;
+  TH2D *h2_npi_vs_nk_tofmatch;
+  TH2D *h2_npi_vs_nk;
+  TH2D *h2_refMult3StPicoEvt_tofmatch_ZDCx;
+  //02022022(finish)
+
+  //05022022(start)
+  TH2D *h2_refMult3StPicoEvtbTOFmatch_tofmatch_raw;
+  TH2D *h2_refMult3StPicoEvtbTOFmatch_tofmatch_cut;
+
+  TH2D *h2_refMult3StPicoEvt_npi_tofmatch;
+  TH2D *h2_refMult3StPicoEvt_nk_tofmatch;
+  TH2D *h2_refMult3StPicoEvt_npi;
+  TH2D *h2_refMult3StPicoEvt_nk;
+  TH2D *h2_npi_tofmatch;
+  TH2D *h2_nk_tofmatch;
+  //05022022(finish)
+
+  //05022022(start): TOFmatch eff corr
+  TH1D *h1_ref3StPicoEvt_TPC_pP[2];
+  TH1D *h1_ref3StPicoEvt_TPC_pM[2];
+  TH1D *h1_ref3StPicoEvt_TOF_pP[2];
+  TH1D *h1_ref3StPicoEvt_TOF_pM[2];
+  TH1D *h1_ref3_tofmatch_TPC_pP[2];
+  TH1D *h1_ref3_tofmatch_TPC_pM[2];
+  TH1D *h1_ref3_tofmatch_TOF_pP[2];
+  TH1D *h1_ref3_tofmatch_TOF_pM[2];
+
+  TH1D *h1_ref3StPicoEvt_TPC_raw_pP[2];
+  TH1D *h1_ref3StPicoEvt_TPC_raw_pM[2];
+  TH1D *h1_ref3StPicoEvt_TOF_raw_pP[2];
+  TH1D *h1_ref3StPicoEvt_TOF_raw_pM[2];
+  TH1D *h1_ref3_tofmatch_TPC_raw_pP[2];
+  TH1D *h1_ref3_tofmatch_TPC_raw_pM[2];
+  TH1D *h1_ref3_tofmatch_TOF_raw_pP[2];
+  TH1D *h1_ref3_tofmatch_TOF_raw_pM[2];
+  //05022022(finish)
+  //15022022(start)
+  TH1D *h1_ref3StPicoEvt_TPC_piP[2];
+  TH1D *h1_ref3StPicoEvt_TPC_piM[2];
+  TH1D *h1_ref3StPicoEvt_TOF_piP[2];
+  TH1D *h1_ref3StPicoEvt_TOF_piM[2];
+  TH1D *h1_ref3_tofmatch_TPC_piP[2];
+  TH1D *h1_ref3_tofmatch_TPC_piM[2];
+  TH1D *h1_ref3_tofmatch_TOF_piP[2];
+  TH1D *h1_ref3_tofmatch_TOF_piM[2];
+
+  TH1D *h1_ref3StPicoEvt_TPC_raw_piP[2];
+  TH1D *h1_ref3StPicoEvt_TPC_raw_piM[2];
+  TH1D *h1_ref3StPicoEvt_TOF_raw_piP[2];
+  TH1D *h1_ref3StPicoEvt_TOF_raw_piM[2];
+  TH1D *h1_ref3_tofmatch_TPC_raw_piP[2];
+  TH1D *h1_ref3_tofmatch_TPC_raw_piM[2];
+  TH1D *h1_ref3_tofmatch_TOF_raw_piP[2];
+  TH1D *h1_ref3_tofmatch_TOF_raw_piM[2];
+
+  TH1D *h1_ref3StPicoEvt_TPC_kP[2];
+  TH1D *h1_ref3StPicoEvt_TPC_kM[2];
+  TH1D *h1_ref3StPicoEvt_TOF_kP[2];
+  TH1D *h1_ref3StPicoEvt_TOF_kM[2];
+  TH1D *h1_ref3_tofmatch_TPC_kP[2];
+  TH1D *h1_ref3_tofmatch_TPC_kM[2];
+  TH1D *h1_ref3_tofmatch_TOF_kP[2];
+  TH1D *h1_ref3_tofmatch_TOF_kM[2];
+
+  TH1D *h1_ref3StPicoEvt_TPC_raw_kP[2];
+  TH1D *h1_ref3StPicoEvt_TPC_raw_kM[2];
+  TH1D *h1_ref3StPicoEvt_TOF_raw_kP[2];
+  TH1D *h1_ref3StPicoEvt_TOF_raw_kM[2];
+  TH1D *h1_ref3_tofmatch_TPC_raw_kP[2];
+  TH1D *h1_ref3_tofmatch_TPC_raw_kM[2];
+  TH1D *h1_ref3_tofmatch_TOF_raw_kP[2];
+  TH1D *h1_ref3_tofmatch_TOF_raw_kM[2];
+
+  TH2D* h2_ref3StPicoEvt_Npi;
+  TH2D* h2_ref3StPicoEvt_Nk;
+  TH2D* h2_ref3_tofmatch_Npi;
+  TH2D* h2_ref3_tofmatch_Nk;
+  //15022022(finish)
+
+  //04022022(start) 
+  TProfile *hP_np_tofmatch_ZDCx;
+  TProfile *hP_nap_tofmatch_ZDCx;
+  TProfile *hP_np_ZDCx;
+  TProfile *hP_nap_ZDCx;
+  //04022022(finish)
+
+  //track level
+  TH1D *h1_dca_noCut;
+  TH1D *h1_dca_Cut;
+  TH1D *h1_nHitsFit_noCut;
+  TH1D *h1_nHitsFit_Cut;
+  TH1D *h1_nHitsDedx_noCut;
+  TH1D *h1_nHitsDedx_Cut;
+  TH1D *h1_nHitsRatio_noCut;
+  TH1D *h1_nHitsRatio_Cut;
+  
+  TH2D *h2_pDedx;
+  TH2D *h2_pDedx_pi;
+  TH2D *h2_pDedx_k;
+  TH2D *h2_pDedx_p;
+
+  TH2D *h2_ptDedx;
+  TH2D *h2_ptDedx_pi;
+  TH2D *h2_ptDedx_k;
+  TH2D *h2_ptDedx_p;
+
+  TH2D *h2_ptDedx_exc;
+
+  //02022022(start)
+  TH2D *h2_ptDedx_tofmatch_pi;
+  TH2D *h2_ptDedx_tofmatch_k;
+  TH2D *h2_ptDedx_tofmatch_p;
+  TH2D *h2_ptDedx_tofmatch_exc;
+  //02022022(finish)
+  
+  TH2D *h2_y_pT_piP;
+  TH2D *h2_y_pT_kP;
+  TH2D *h2_y_pT_pP;
+  TH2D *h2_y_pT_piM;
+  TH2D *h2_y_pT_kM;
+  TH2D *h2_y_pT_pM;
+
+  TH2D *h2_y_pT_piP_accCut;
+  TH2D *h2_y_pT_kP_accCut;
+  TH2D *h2_y_pT_pP_accCut;
+  TH2D *h2_y_pT_piM_accCut;
+  TH2D *h2_y_pT_kM_accCut;
+  TH2D *h2_y_pT_pM_accCut;
+
+  TH2D *h2_y_pT_piP_accCut_effCorr;
+  TH2D *h2_y_pT_kP_accCut_effCorr;
+  TH2D *h2_y_pT_pP_accCut_effCorr;
+  TH2D *h2_y_pT_piM_accCut_effCorr;
+  TH2D *h2_y_pT_kM_accCut_effCorr;
+  TH2D *h2_y_pT_pM_accCut_effCorr;
+
+  //GeV
+  const float MELECTRON  = 0.000511;
+  const float MMUON  = 0.105658;
+  const float MPION  = 0.13957;
+  const float MKAON  = 0.493677;
+  const float MPROTON  = 0.93827;
+
+  //Save in tree
+  //Filled in event level
+  float ZDCx_t;
+  float vz_t;
+  float vpdz_t;
+  int nBTOFMatch_t;
+  //26122021(start)
+  float refMultStPicoEvt_t;
+  //26122021(finish)
+  float refMult3StPicoEvt_t;
+  float refMult3StPicoEvt_Corr_t;
+  //EPD
+  float nEdpMIPsEW_rCutnMIPcut_t;//=nEdpMIPsE_rCutnMIPcut_t+nEdpMIPsW_rCutnMIPcut_t
+  float nEdpMIPsEW_rCutnMIPcut_Corr_t;//=nEdpMIPsE_rCutnMIPcut_t+nEdpMIPsW_rCutnMIPcut_t
+
+  //beta_eta1 
+  int beta_eta1_t;
+
+  //10032023(start)
+  //avgDCAxy
+  float avgDCAxy_t[9];
+  //avgDCAz
+  float avgDCAz_t[9];
+  //counterP
+  int counterP_t[9];
+  //counterAP
+  int counterAP_t[9];
+  //10032023(finish)
+
+
+
+  //02022022(start)
+  int refMult3_tofmatch_t;
+  int Npi_tofmatch_t;
+  int Nk_tofmatch_t;
+  int Npi_t;
+  int Nk_t;
+  //02022022(finish)
+
+  /* float avgDCAxy_t; */
+  /* float avgDCAz_t; */
+
+  //12022022(start)
+  float pt_cut[3];
+  //12022022(finish)
+
+  //Filled in track level
+  vector<float> dca_t;
+  vector<int> nHitsFit_t;
+  vector<float> nSP_t;
+  vector<float> m2_t;
+  vector<int> charge_t;
+  vector<float> yP_t;
+  vector<float> pT_t;
+  //26122021(start)
+  vector<float> dedx_t;
+  //26122021(finish)
+  /* vector<int> pid_t; */
+  /* vector<float> deteff_t; */
+  //05022022(start) 
+  vector<int> btofmatchflag_t;
+  //05022022(finish) 
+
+		// For fluctuation measurement
+		int proton_low_y5_netp,anti_proton_low_y5_netp,proton_high_y5_netp,anti_proton_high_y5_netp;
+		int kaon_low_y5_netk,anti_kaon_low_y5_netk,kaon_high_y5_netk,anti_kaon_high_y5_netk;
+		int proton_low_y5_netc,anti_proton_low_y5_netc,proton_high_y5_netc,anti_proton_high_y5_netc;
+		int kaon_low_y5_netc,anti_kaon_low_y5_netc,kaon_high_y5_netc,anti_kaon_high_y5_netc;
+		int pion_low_y5_netc,anti_pion_low_y5_netc,pion_high_y5_netc,anti_pion_high_y5_netc;
+
+                int proton_low_y4_netp,anti_proton_low_y4_netp,proton_high_y4_netp,anti_proton_high_y4_netp;
+                int kaon_low_y4_netk,anti_kaon_low_y4_netk,kaon_high_y4_netk,anti_kaon_high_y4_netk;
+                int proton_low_y4_netc,anti_proton_low_y4_netc,proton_high_y4_netc,anti_proton_high_y4_netc;
+                int kaon_low_y4_netc,anti_kaon_low_y4_netc,kaon_high_y4_netc,anti_kaon_high_y4_netc;
+                int pion_low_y4_netc,anti_pion_low_y4_netc,pion_high_y4_netc,anti_pion_high_y4_netc;
+
+                int proton_low_y3_netp,anti_proton_low_y3_netp,proton_high_y3_netp,anti_proton_high_y3_netp;
+                int kaon_low_y3_netk,anti_kaon_low_y3_netk,kaon_high_y3_netk,anti_kaon_high_y3_netk;
+                int proton_low_y3_netc,anti_proton_low_y3_netc,proton_high_y3_netc,anti_proton_high_y3_netc;
+                int kaon_low_y3_netc,anti_kaon_low_y3_netc,kaon_high_y3_netc,anti_kaon_high_y3_netc;
+                int pion_low_y3_netc,anti_pion_low_y3_netc,pion_high_y3_netc,anti_pion_high_y3_netc;
+
+                int proton_low_y2_netp,anti_proton_low_y2_netp,proton_high_y2_netp,anti_proton_high_y2_netp;
+                int kaon_low_y2_netk,anti_kaon_low_y2_netk,kaon_high_y2_netk,anti_kaon_high_y2_netk;
+                int proton_low_y2_netc,anti_proton_low_y2_netc,proton_high_y2_netc,anti_proton_high_y2_netc;
+                int kaon_low_y2_netc,anti_kaon_low_y2_netc,kaon_high_y2_netc,anti_kaon_high_y2_netc;
+                int pion_low_y2_netc,anti_pion_low_y2_netc,pion_high_y2_netc,anti_pion_high_y2_netc;
+
+                int proton_low_y1_netp,anti_proton_low_y1_netp,proton_high_y1_netp,anti_proton_high_y1_netp;
+                int kaon_low_y1_netk,anti_kaon_low_y1_netk,kaon_high_y1_netk,anti_kaon_high_y1_netk;
+                int proton_low_y1_netc,anti_proton_low_y1_netc,proton_high_y1_netc,anti_proton_high_y1_netc;
+                int kaon_low_y1_netc,anti_kaon_low_y1_netc,kaon_high_y1_netc,anti_kaon_high_y1_netc;
+                int pion_low_y1_netc,anti_pion_low_y1_netc,pion_high_y1_netc,anti_pion_high_y1_netc;
+
+  //Filled in event level.
+  TTree *t_event;
+
+  ClassDef(StQAMaker,1)
+};
+
+#endif

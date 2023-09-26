@@ -1,0 +1,1070 @@
+#include <fstream>
+#include <vector>
+#include <algorithm>
+
+#include "StQAMaker.h"
+
+#include "StPicoEvent/StPicoDst.h"
+#include "StPicoEvent/StPicoTrack.h"
+#include "StPicoDstMaker/StPicoDstMaker.h"
+#include "StPicoEvent/StPicoEvent.h"
+#include "StPicoEvent/StPicoBTofPidTraits.h"
+#include "StPicoEvent/StPicoEpdHit.h"
+#include "StEpdUtil/StEpdGeom.h"
+#include "StBTofUtil/tofPathLength.hh"
+#include "StThreeVectorF.hh"
+#include "Stiostream.h"
+#include "PhysicalConstants.h"
+#include "phys_constants.h"
+
+#include <TMath.h>
+#include "TFile.h"
+#include "TCutG.h"
+#include "TH1D.h"
+#include "TH2D.h"
+#include "TH3D.h"
+#include "TTree.h"
+#include "TProfile.h"
+#include "TCanvas.h"
+#include "TPaveText.h"
+#include "TDirectory.h"
+#include "TLorentzVector.h"
+
+#include "RunNo.h"
+
+ClassImp(StQAMaker)
+
+StQAMaker::StQAMaker(const char* name, StPicoDstMaker *picoMaker, const char* outName, const char* jobID)
+  : StMaker(name){
+    mPicoDstMaker = picoMaker;
+    mPicoDst = 0;
+    TString fileName = "";
+    fileName.Append(outName);
+    fileName.Append(jobID);
+    OutDir = outName;
+    mOutputName = fileName+ "_tree.root";
+    mOutputName_hist = fileName+ "_hist.root";
+  }
+
+StQAMaker::~StQAMaker(){}
+
+int StQAMaker::Init()
+{
+  EventID=0;
+  // mDetectorEfficiency = new StDetectorEfficiency();//Form("/star/u/hsko/pwg/anal/Coll/isobar/ZrZrRuRu200_2018/charge/efficiency/%s_efficiency.root", NameRuZr.c_str()));
+
+  // //Read HAND CUT TO REMOVE HIGH MULT PILE UP!!! DANGEROUS?? <== YES!! THIS IS COMPELETEY WRONG TO DO! NEVER USE THIS HIGH MULT IN-TIME PILE UP CUT! GIVE CUT IN CENTRALITY DEFINITION DURING CUMULANT CALCULATION LATER (MAX MULT SET)
+  // f_mult_cut = new TFile("/star/u/hsko/pwg/anal/Coll/isobar/ZrZrRuRu200_2018/charge/QA_tree_light2/net_proton/20082021/StRoot/StQAMaker/cut.root", "READ");
+  // // cut_epd_ru = (TCutG*)f_mult_cut->Get("epdbtof_Ru"); cut_epd_ru->SetVarX("nEdpMIPsEW_rCutnMIPcut_t"); cut_epd_ru->SetVarY("nBTOFMatch_t");
+  // // cut_epd_zr = (TCutG*)f_mult_cut->Get("epdbtof_Zr"); cut_epd_zr->SetVarX("nEdpMIPsEW_rCutnMIPcut_t"); cut_epd_zr->SetVarY("nBTOFMatch_t");
+
+  //Write
+  outfile = new TFile(mOutputName,"RECREATE");
+
+  t_event = new TTree("t_event", "QA. Filled in event level");
+  //event level
+  t_event->Branch("ZDCx_t", &ZDCx_t, "ZDCx/F");
+  t_event->Branch("vz_t", &vz_t, "vz/F");
+  t_event->Branch("vpdz_t", &vpdz_t, "vpdz/F");
+  t_event->Branch("nBTOFMatch_t", &nBTOFMatch_t, "nBTOFMatch/I");
+  //26122021(start)
+  t_event->Branch("refMultStPicoEvt_t", &refMultStPicoEvt_t, "refMultStPicoEvt/F");
+  //26122021(finish)
+  t_event->Branch("refMult3StPicoEvt_t", &refMult3StPicoEvt_t, "refMult3StPicoEvt/F");
+  //EPD
+  t_event->Branch("nEdpMIPsEW_rCutnMIPcut_t", &nEdpMIPsEW_rCutnMIPcut_t, "nEdpMIPsEW_rCutnMIPcut/F");
+  //beta_eta1
+  t_event->Branch("beta_eta1_t", &beta_eta1_t, "beta_eta1_t/I");
+
+  //10032023(start)
+  //avgDCAxy
+  t_event->Branch("avgDCAxy_t", &avgDCAxy_t, "avgDCAxy_t[9]/F");
+  //avgDCAz
+  t_event->Branch("avgDCAz_t", &avgDCAz_t, "avgDCAz_t[9]/F");
+  //counterP
+  t_event->Branch("counterP_t", &counterP_t, "counterP_t[9]/I");
+  //counterAP
+  t_event->Branch("counterAP_t", &counterAP_t, "counterAP_t[9]/I");
+  //10032023(finish)
+
+  
+  // t_event->Branch("avgDCAxy_t", &avgDCAxy_t, "avgDCAxy/F");
+  // t_event->Branch("avgDCAz_t", &avgDCAz_t, "avgDCAz/F");
+
+  //02022022(start)
+  // t_event->Branch("refMult3_tofmatch_t", &refMult3_tofmatch_t, "refMult3_tofmatch/I");
+  // t_event->Branch("Npi_tofmatch_t", &Npi_tofmatch_t, "Npi_tofmatch/I");
+  // t_event->Branch("Nk_tofmatch_t", &Nk_tofmatch_t, "Nk_tofmatch/I");
+  // t_event->Branch("Npi_t", &Npi_t, "Npi/I");//should be same as w/ tofmatch due to m2 cut
+  // t_event->Branch("Nk_t", &Nk_t, "Nk/I");//should be same as w/ tofmatch due to m2 cut
+  //02022022(finish)
+
+  //track level
+  t_event->Branch("dca_t", &dca_t);
+  t_event->Branch("nHitsFit_t", &nHitsFit_t);
+  t_event->Branch("nSP_t", &nSP_t);
+  t_event->Branch("m2_t", &m2_t);
+  t_event->Branch("charge_t", &charge_t);
+  t_event->Branch("yP_t", &yP_t);
+  t_event->Branch("pT_t", &pT_t);
+  t_event->Branch("dedx_t", &dedx_t);
+  // t_event->Branch("pid_t", &pid_t);
+  // t_event->Branch("deteff_t", &deteff_t);
+  //05022022(start)
+  t_event->Branch("btofmatchflag_t", &btofmatchflag_t);
+  //05022022(finish)
+
+        t_event->Branch("proton_low_y5_netp",&proton_low_y5_netp,"poton_low_y5_netp/I") ;
+        t_event->Branch("anti_proton_low_y5_netp",&anti_proton_low_y5_netp,"anti_proton_low_y5_netp/I");
+        t_event->Branch("proton_high_y5_netp",&proton_high_y5_netp,"proton_high_y5_netp/I") ;
+        t_event->Branch("anti_proton_high_y5_netp",&anti_proton_high_y5_netp,"anti_proton_high_y5_netp/I");
+
+  outfile_hist = new TFile(mOutputName_hist,"RECREATE");
+
+  //event level
+  h1_NoEvt = new TH1D("h1_NoEvt", "h1_NoEvt", 4, 0, 4);
+  h1_TPCvz_noCut = new TH1D("h1_TPCvz_noCut", "h1_TPCvz_noCut", 75*2, -75, 75);
+  h1_TPCvz_Cut = new TH1D("h1_TPCvz_Cut", "h1_TPCvz_Cut", 35*2, -35, 35);
+  h2_TPCvxy_noCut = new TH2D("h2_TPCvxy_noCut", "h2_TPCvxy_noCut", 200, -4, 4, 200, -4, 4);
+  h2_TPCvxy_Cut = new TH2D("h2_TPCvxy_Cut", "h2_TPCvxy_Cut", 200, -2.5, 2.5, 200, -2.5, 2.5);
+  h_TPC_VPD_vz_noCut = new TH1D("h_TPC_VPD_vz_noCut", "h_TPC_VPD_vz_noCut", 200, -10, 10);
+  h_TPC_VPD_vz_Cut = new TH1D("h_TPC_VPD_vz_Cut", "h_TPC_VPD_vz_Cut", 200, -5, 5);
+
+  //22122021(start)  
+  //RefStPicoEvt
+  h2_refMultStPicoEvtbTOFmatch_raw = new TH2D("h2_refMultStPicoEvtbTOFmatch_raw", "h2_refMultStPicoEvtbTOFmatch_raw", maxMult, 0, maxMult, maxMult, 0, maxMult);
+  h2_refMultStPicoEvtbTOFmatch_cut = new TH2D("h2_refMultStPicoEvtbTOFmatch_cut", "h2_refMultStPicoEvtbTOFmatch_cut", maxMult, 0, maxMult, maxMult, 0, maxMult);
+  // h2_refMultStPicoEvtbTOFmatch_cut1_1 = new TH2D("h2_refMultStPicoEvtbTOFmatch_cut1_1", "h2_refMultStPicoEvtbTOFmatch_cut1_1", maxMult, 0, maxMult, maxMult, 0, maxMult);
+  // h2_refMultStPicoEvtbTOFmatch_cut1_2 = new TH2D("h2_refMultStPicoEvtbTOFmatch_cut1_2", "h2_refMultStPicoEvtbTOFmatch_cut1_2", maxMult, 0, maxMult, maxMult, 0, maxMult);
+
+  h2_refMultStPicoEvt_ZDCx = new TH2D("h2_refMultStPicoEvt_ZDCx", "h2_refMultStPicoEvt_ZDCx", maxMult, 0, maxMult, 8000, 6000, 14000);
+  h2_refMultStPicoEvt_vz = new TH2D("h2_refMultStPicoEvt_vz", "h2_refMultStPicoEvt_vz", maxMult, 0, maxMult, 100, -5, 25);
+  //22122021(finish)  
+
+  //Ref3StPicoEvt
+  h2_refMult3StPicoEvtbTOFmatch_raw = new TH2D("h2_refMult3StPicoEvtbTOFmatch_raw", "h2_refMult3StPicoEvtbTOFmatch_raw", maxMult, 0, maxMult, maxMult, 0, maxMult);
+  h2_refMult3StPicoEvtbTOFmatch_cut = new TH2D("h2_refMult3StPicoEvtbTOFmatch_cut", "h2_refMult3StPicoEvtbTOFmatch_cut", maxMult, 0, maxMult, maxMult, 0, maxMult);
+  // h2_refMult3StPicoEvtbTOFmatch_cut1_1 = new TH2D("h2_refMult3StPicoEvtbTOFmatch_cut1_1", "h2_refMult3StPicoEvtbTOFmatch_cut1_1", maxMult, 0, maxMult, maxMult, 0, maxMult);
+  // h2_refMult3StPicoEvtbTOFmatch_cut1_2 = new TH2D("h2_refMult3StPicoEvtbTOFmatch_cut1_2", "h2_refMult3StPicoEvtbTOFmatch_cut1_2", maxMult, 0, maxMult, maxMult, 0, maxMult);
+
+  h2_refMult3StPicoEvt_ZDCx = new TH2D("h2_refMult3StPicoEvt_ZDCx", "h2_refMult3StPicoEvt_ZDCx", maxMult, 0, maxMult, 8000, 6000, 14000);
+  h2_refMult3StPicoEvt_vz = new TH2D("h2_refMult3StPicoEvt_vz", "h2_refMult3StPicoEvt_vz", maxMult, 0, maxMult, 100, -35, 25);
+  
+  //EPD
+  h2_EpdMIPbTOFmatch_raw = new TH2D("h2_EpdMIPbTOFmatch_raw", "h2_EpdMIPbTOFmatch_raw", maxMult, 0, maxMult, maxMult, 0, maxMult);
+  h2_EpdMIPbTOFmatch_cut = new TH2D("h2_EpdMIPbTOFmatch_cut", "h2_EpdMIPbTOFmatch_cut", maxMult, 0, maxMult, maxMult, 0, maxMult);
+  // h2_EpdMIPbTOFmatch_cut1_1 = new TH2D("h2_EpdMIPbTOFmatch_cut1_1", "h2_EpdMIPbTOFmatch_cut1_1", maxMult, 0, maxMult, maxMult, 0, maxMult);
+  // h2_EpdMIPbTOFmatch_cut1_2 = new TH2D("h2_EpdMIPbTOFmatch_cut1_2", "h2_EpdMIPbTOFmatch_cut1_2", maxMult, 0, maxMult, maxMult, 0, maxMult);
+
+  //EPD vs Ref3StPicoEvt
+  h2_EpdMIPrefMult3StPicoEvt_raw = new TH2D("h2_EpdMIPrefMult3StPicoEvt_raw", "h2_EpdMIPrefMult3StPicoEvt_raw", maxMult, 0, maxMult, maxMult, 0, maxMult);
+  h2_EpdMIPrefMult3StPicoEvt_cut = new TH2D("h2_EpdMIPrefMult3StPicoEvt_cut", "h2_EpdMIPrefMult3StPicoEvt_cut", maxMult, 0, maxMult, maxMult, 0, maxMult);
+  // h2_EpdMIPrefMult3StPicoEvt_cut1_1 = new TH2D("h2_EpdMIPrefMult3StPicoEvt_cut1_1", "h2_EpdMIPrefMult3StPicoEvt_cut1_1", maxMult, 0, maxMult, maxMult, 0, maxMult);
+  // h2_EpdMIPrefMult3StPicoEvt_cut1_2 = new TH2D("h2_EpdMIPrefMult3StPicoEvt_cut1_2", "h2_EpdMIPrefMult3StPicoEvt_cut1_2", maxMult, 0, maxMult, maxMult, 0, maxMult);
+
+  //22122021(start)  
+  //EPD vs RefStPicoEvt
+  h2_EpdMIPrefMultStPicoEvt_raw = new TH2D("h2_EpdMIPrefMultStPicoEvt_raw", "h2_EpdMIPrefMultStPicoEvt_raw", maxMult, 0, maxMult, maxMult, 0, maxMult);
+  h2_EpdMIPrefMultStPicoEvt_cut = new TH2D("h2_EpdMIPrefMultStPicoEvt_cut", "h2_EpdMIPrefMultStPicoEvt_cut", maxMult, 0, maxMult, maxMult, 0, maxMult);
+  // h2_EpdMIPrefMultStPicoEvt_cut1_1 = new TH2D("h2_EpdMIPrefMultStPicoEvt_cut1_1", "h2_EpdMIPrefMultStPicoEvt_cut1_1", maxMult, 0, maxMult, maxMult, 0, maxMult);
+  // h2_EpdMIPrefMultStPicoEvt_cut1_2 = new TH2D("h2_EpdMIPrefMultStPicoEvt_cut1_2", "h2_EpdMIPrefMultStPicoEvt_cut1_2", maxMult, 0, maxMult, maxMult, 0, maxMult);
+
+  //Ref3StPicoEvt vs RefStPicoEvt
+  h2_refMult3StPicoEvtrefMultStPicoEvt_raw = new TH2D("h2_refMult3StPicoEvtrefMultStPicoEvt_raw", "h2_refMult3StPicoEvtrefMultStPicoEvt_raw", maxMult, 0, maxMult, maxMult, 0, maxMult);
+  h2_refMult3StPicoEvtrefMultStPicoEvt_cut = new TH2D("h2_refMult3StPicoEvtrefMultStPicoEvt_cut", "h2_refMult3StPicoEvtrefMultStPicoEvt_cut", maxMult, 0, maxMult, maxMult, 0, maxMult);
+  // h2_refMult3StPicoEvtrefMultStPicoEvt_cut1_1 = new TH2D("h2_refMult3StPicoEvtrefMultStPicoEvt_cut1_1", "h2_refMult3StPicoEvtrefMultStPicoEvt_cut1_1", maxMult, 0, maxMult, maxMult, 0, maxMult);
+  // h2_refMult3StPicoEvtrefMultStPicoEvt_cut1_2 = new TH2D("h2_refMult3StPicoEvtrefMultStPicoEvt_cut1_2", "h2_refMult3StPicoEvtrefMultStPicoEvt_cut1_2", maxMult, 0, maxMult, maxMult, 0, maxMult);
+  //22122021(finish)  
+
+  //Ref3StPicoEvt vs beta_eta1 
+  h2_refMult3StPicoEvtbetaeta_raw = new TH2D("h2_refMult3StPicoEvtbetaeta_raw", "h2_refMult3StPicoEvtbetaeta_raw", maxMult, 0, maxMult, maxMult, 0, maxMult);
+  h2_refMult3StPicoEvtbetaeta_cut = new TH2D("h2_refMult3StPicoEvtbetaeta_cut", "h2_refMult3StPicoEvtbetaeta_cut", maxMult, 0, maxMult, maxMult, 0, maxMult);
+
+  //02022022(start)
+  h2_refMult3StPicoEvt_tofmatch = new TH2D("h2_refMult3StPicoEvt_tofmatch", "h2_refMult3StPicoEvt_tofmatch", maxMult, 0, maxMult, maxMult, 0, maxMult);
+  h2_npi_vs_nk_tofmatch = new TH2D("h2_npi_vs_nk_tofmatch", "h2_npi_vs_nk_tofmatch", maxMult, 0, maxMult, maxMult, 0, maxMult);
+  h2_npi_vs_nk = new TH2D("h2_npi_vs_nk", "h2_npi_vs_nk", maxMult, 0, maxMult, maxMult, 0, maxMult);
+  h2_refMult3StPicoEvt_tofmatch_ZDCx = new TH2D("h2_refMult3StPicoEvt_tofmatch_ZDCx", "h2_refMult3StPicoEvt_tofmatch_ZDCx", maxMult, 0, maxMult, 8000, 6000, 14000);
+  //02022022(finish)
+
+  //05022022(start)
+  h2_refMult3StPicoEvtbTOFmatch_tofmatch_raw = new TH2D("h2_refMult3StPicoEvtbTOFmatch_tofmatch_raw", "h2_refMult3StPicoEvtbTOFmatch_tofmatch_raw", maxMult, 0, maxMult, maxMult, 0, maxMult);
+  h2_refMult3StPicoEvtbTOFmatch_tofmatch_cut = new TH2D("h2_refMult3StPicoEvtbTOFmatch_tofmatch_cut", "h2_refMult3StPicoEvtbTOFmatch_tofmatch_cut", maxMult, 0, maxMult, maxMult, 0, maxMult);
+
+  h2_refMult3StPicoEvt_npi_tofmatch = new TH2D("h2_refMult3StPicoEvt_npi_tofmatch", "h2_refMult3StPicoEvt_npi_tofmatch", maxMult, 0, maxMult, maxMult, 0, maxMult);
+  h2_refMult3StPicoEvt_nk_tofmatch = new TH2D("h2_refMult3StPicoEvt_nk_tofmatch", "h2_refMult3StPicoEvt_nk_tofmatch", maxMult, 0, maxMult, maxMult, 0, maxMult);
+  h2_refMult3StPicoEvt_npi = new TH2D("h2_refMult3StPicoEvt_npi", "h2_refMult3StPicoEvt_npi", maxMult, 0, maxMult, maxMult, 0, maxMult);
+  h2_refMult3StPicoEvt_nk = new TH2D("h2_refMult3StPicoEvt_nk", "h2_refMult3StPicoEvt_nk", maxMult, 0, maxMult, maxMult, 0, maxMult);
+  h2_npi_tofmatch = new TH2D("h2_npi_tofmatch", "h2_npi_tofmatch", maxMult, 0, maxMult, maxMult, 0, maxMult);
+  h2_nk_tofmatch = new TH2D("h2_nk_tofmatch", "h2_nk_tofmatch", maxMult, 0, maxMult, maxMult, 0, maxMult);
+  //05022022(finish)
+
+  //05022022(start): TOFmatch eff corr
+  // double pt_cut[3];
+  pt_cut[0] = 0.4; pt_cut[1] = 0.8; pt_cut[2] = 2.0; 
+  for(int i_pt = 0 ; i_pt < 2 ; i_pt++){
+    h1_ref3StPicoEvt_TPC_pP[i_pt] = new TH1D(Form("h1_ref3StPicoEvt_TPC_pP_%d", i_pt), Form("pT: [%1.1f, %1.1f) GeV/c", pt_cut[i_pt], pt_cut[i_pt+1]), maxMult, 0, maxMult);
+    h1_ref3StPicoEvt_TPC_pM[i_pt] = new TH1D(Form("h1_ref3StPicoEvt_TPC_pM_%d", i_pt), Form("pT: [%1.1f, %1.1f) GeV/c", pt_cut[i_pt], pt_cut[i_pt+1]), maxMult, 0, maxMult);
+    h1_ref3StPicoEvt_TOF_pP[i_pt] = new TH1D(Form("h1_ref3StPicoEvt_TOF_pP_%d", i_pt), Form("pT: [%1.1f, %1.1f) GeV/c", pt_cut[i_pt], pt_cut[i_pt+1]), maxMult, 0, maxMult);
+    h1_ref3StPicoEvt_TOF_pM[i_pt] = new TH1D(Form("h1_ref3StPicoEvt_TOF_pM_%d", i_pt), Form("pT: [%1.1f, %1.1f) GeV/c", pt_cut[i_pt], pt_cut[i_pt+1]), maxMult, 0, maxMult);
+    h1_ref3_tofmatch_TPC_pP[i_pt] = new TH1D(Form("h1_ref3_tofmatch_TPC_pP_%d", i_pt), Form("pT: [%1.1f, %1.1f) GeV/c", pt_cut[i_pt], pt_cut[i_pt+1]), maxMult, 0, maxMult);
+    h1_ref3_tofmatch_TPC_pM[i_pt] = new TH1D(Form("h1_ref3_tofmatch_TPC_pM_%d", i_pt), Form("pT: [%1.1f, %1.1f) GeV/c", pt_cut[i_pt], pt_cut[i_pt+1]), maxMult, 0, maxMult);
+    h1_ref3_tofmatch_TOF_pP[i_pt] = new TH1D(Form("h1_ref3_tofmatch_TOF_pP_%d", i_pt), Form("pT: [%1.1f, %1.1f) GeV/c", pt_cut[i_pt], pt_cut[i_pt+1]), maxMult, 0, maxMult);
+    h1_ref3_tofmatch_TOF_pM[i_pt] = new TH1D(Form("h1_ref3_tofmatch_TOF_pM_%d", i_pt), Form("pT: [%1.1f, %1.1f) GeV/c", pt_cut[i_pt], pt_cut[i_pt+1]), maxMult, 0, maxMult);
+
+    h1_ref3StPicoEvt_TPC_raw_pP[i_pt] = new TH1D(Form("h1_ref3StPicoEvt_TPC_raw_pP_%d", i_pt), Form("pT: [%1.1f, %1.1f) GeV/c", pt_cut[i_pt], pt_cut[i_pt+1]), maxMult, 0, maxMult);
+    h1_ref3StPicoEvt_TPC_raw_pM[i_pt] = new TH1D(Form("h1_ref3StPicoEvt_TPC_raw_pM_%d", i_pt), Form("pT: [%1.1f, %1.1f) GeV/c", pt_cut[i_pt], pt_cut[i_pt+1]), maxMult, 0, maxMult);
+    h1_ref3StPicoEvt_TOF_raw_pP[i_pt] = new TH1D(Form("h1_ref3StPicoEvt_TOF_raw_pP_%d", i_pt), Form("pT: [%1.1f, %1.1f) GeV/c", pt_cut[i_pt], pt_cut[i_pt+1]), maxMult, 0, maxMult);
+    h1_ref3StPicoEvt_TOF_raw_pM[i_pt] = new TH1D(Form("h1_ref3StPicoEvt_TOF_raw_pM_%d", i_pt), Form("pT: [%1.1f, %1.1f) GeV/c", pt_cut[i_pt], pt_cut[i_pt+1]), maxMult, 0, maxMult);
+    h1_ref3_tofmatch_TPC_raw_pP[i_pt] = new TH1D(Form("h1_ref3_tofmatch_TPC_raw_pP_%d", i_pt), Form("pT: [%1.1f, %1.1f) GeV/c", pt_cut[i_pt], pt_cut[i_pt+1]), maxMult, 0, maxMult);
+    h1_ref3_tofmatch_TPC_raw_pM[i_pt] = new TH1D(Form("h1_ref3_tofmatch_TPC_raw_pM_%d", i_pt), Form("pT: [%1.1f, %1.1f) GeV/c", pt_cut[i_pt], pt_cut[i_pt+1]), maxMult, 0, maxMult);
+    h1_ref3_tofmatch_TOF_raw_pP[i_pt] = new TH1D(Form("h1_ref3_tofmatch_TOF_raw_pP_%d", i_pt), Form("pT: [%1.1f, %1.1f) GeV/c", pt_cut[i_pt], pt_cut[i_pt+1]), maxMult, 0, maxMult);
+    h1_ref3_tofmatch_TOF_raw_pM[i_pt] = new TH1D(Form("h1_ref3_tofmatch_TOF_raw_pM_%d", i_pt), Form("pT: [%1.1f, %1.1f) GeV/c", pt_cut[i_pt], pt_cut[i_pt+1]), maxMult, 0, maxMult);
+
+    //15022022(start)
+    h1_ref3StPicoEvt_TPC_piP[i_pt] = new TH1D(Form("h1_ref3StPicoEvt_TPC_piP_%d", i_pt), Form("pT: [%1.1f, %1.1f) GeV/c", pt_cut[i_pt], pt_cut[i_pt+1]), maxMult, 0, maxMult);
+    h1_ref3StPicoEvt_TPC_piM[i_pt] = new TH1D(Form("h1_ref3StPicoEvt_TPC_piM_%d", i_pt), Form("pT: [%1.1f, %1.1f) GeV/c", pt_cut[i_pt], pt_cut[i_pt+1]), maxMult, 0, maxMult);
+    h1_ref3StPicoEvt_TOF_piP[i_pt] = new TH1D(Form("h1_ref3StPicoEvt_TOF_piP_%d", i_pt), Form("pT: [%1.1f, %1.1f) GeV/c", pt_cut[i_pt], pt_cut[i_pt+1]), maxMult, 0, maxMult);
+    h1_ref3StPicoEvt_TOF_piM[i_pt] = new TH1D(Form("h1_ref3StPicoEvt_TOF_piM_%d", i_pt), Form("pT: [%1.1f, %1.1f) GeV/c", pt_cut[i_pt], pt_cut[i_pt+1]), maxMult, 0, maxMult);
+    h1_ref3_tofmatch_TPC_piP[i_pt] = new TH1D(Form("h1_ref3_tofmatch_TPC_piP_%d", i_pt), Form("pT: [%1.1f, %1.1f) GeV/c", pt_cut[i_pt], pt_cut[i_pt+1]), maxMult, 0, maxMult);
+    h1_ref3_tofmatch_TPC_piM[i_pt] = new TH1D(Form("h1_ref3_tofmatch_TPC_piM_%d", i_pt), Form("pT: [%1.1f, %1.1f) GeV/c", pt_cut[i_pt], pt_cut[i_pt+1]), maxMult, 0, maxMult);
+    h1_ref3_tofmatch_TOF_piP[i_pt] = new TH1D(Form("h1_ref3_tofmatch_TOF_piP_%d", i_pt), Form("pT: [%1.1f, %1.1f) GeV/c", pt_cut[i_pt], pt_cut[i_pt+1]), maxMult, 0, maxMult);
+    h1_ref3_tofmatch_TOF_piM[i_pt] = new TH1D(Form("h1_ref3_tofmatch_TOF_piM_%d", i_pt), Form("pT: [%1.1f, %1.1f) GeV/c", pt_cut[i_pt], pt_cut[i_pt+1]), maxMult, 0, maxMult);
+
+    h1_ref3StPicoEvt_TPC_raw_piP[i_pt] = new TH1D(Form("h1_ref3StPicoEvt_TPC_raw_piP_%d", i_pt), Form("pT: [%1.1f, %1.1f) GeV/c", pt_cut[i_pt], pt_cut[i_pt+1]), maxMult, 0, maxMult);
+    h1_ref3StPicoEvt_TPC_raw_piM[i_pt] = new TH1D(Form("h1_ref3StPicoEvt_TPC_raw_piM_%d", i_pt), Form("pT: [%1.1f, %1.1f) GeV/c", pt_cut[i_pt], pt_cut[i_pt+1]), maxMult, 0, maxMult);
+    h1_ref3StPicoEvt_TOF_raw_piP[i_pt] = new TH1D(Form("h1_ref3StPicoEvt_TOF_raw_piP_%d", i_pt), Form("pT: [%1.1f, %1.1f) GeV/c", pt_cut[i_pt], pt_cut[i_pt+1]), maxMult, 0, maxMult);
+    h1_ref3StPicoEvt_TOF_raw_piM[i_pt] = new TH1D(Form("h1_ref3StPicoEvt_TOF_raw_piM_%d", i_pt), Form("pT: [%1.1f, %1.1f) GeV/c", pt_cut[i_pt], pt_cut[i_pt+1]), maxMult, 0, maxMult);
+    h1_ref3_tofmatch_TPC_raw_piP[i_pt] = new TH1D(Form("h1_ref3_tofmatch_TPC_raw_piP_%d", i_pt), Form("pT: [%1.1f, %1.1f) GeV/c", pt_cut[i_pt], pt_cut[i_pt+1]), maxMult, 0, maxMult);
+    h1_ref3_tofmatch_TPC_raw_piM[i_pt] = new TH1D(Form("h1_ref3_tofmatch_TPC_raw_piM_%d", i_pt), Form("pT: [%1.1f, %1.1f) GeV/c", pt_cut[i_pt], pt_cut[i_pt+1]), maxMult, 0, maxMult);
+    h1_ref3_tofmatch_TOF_raw_piP[i_pt] = new TH1D(Form("h1_ref3_tofmatch_TOF_raw_piP_%d", i_pt), Form("pT: [%1.1f, %1.1f) GeV/c", pt_cut[i_pt], pt_cut[i_pt+1]), maxMult, 0, maxMult);
+    h1_ref3_tofmatch_TOF_raw_piM[i_pt] = new TH1D(Form("h1_ref3_tofmatch_TOF_raw_piM_%d", i_pt), Form("pT: [%1.1f, %1.1f) GeV/c", pt_cut[i_pt], pt_cut[i_pt+1]), maxMult, 0, maxMult);
+
+    h1_ref3StPicoEvt_TPC_kP[i_pt] = new TH1D(Form("h1_ref3StPicoEvt_TPC_kP_%d", i_pt), Form("pT: [%1.1f, %1.1f) GeV/c", pt_cut[i_pt], pt_cut[i_pt+1]), maxMult, 0, maxMult);
+    h1_ref3StPicoEvt_TPC_kM[i_pt] = new TH1D(Form("h1_ref3StPicoEvt_TPC_kM_%d", i_pt), Form("pT: [%1.1f, %1.1f) GeV/c", pt_cut[i_pt], pt_cut[i_pt+1]), maxMult, 0, maxMult);
+    h1_ref3StPicoEvt_TOF_kP[i_pt] = new TH1D(Form("h1_ref3StPicoEvt_TOF_kP_%d", i_pt), Form("pT: [%1.1f, %1.1f) GeV/c", pt_cut[i_pt], pt_cut[i_pt+1]), maxMult, 0, maxMult);
+    h1_ref3StPicoEvt_TOF_kM[i_pt] = new TH1D(Form("h1_ref3StPicoEvt_TOF_kM_%d", i_pt), Form("pT: [%1.1f, %1.1f) GeV/c", pt_cut[i_pt], pt_cut[i_pt+1]), maxMult, 0, maxMult);
+    h1_ref3_tofmatch_TPC_kP[i_pt] = new TH1D(Form("h1_ref3_tofmatch_TPC_kP_%d", i_pt), Form("pT: [%1.1f, %1.1f) GeV/c", pt_cut[i_pt], pt_cut[i_pt+1]), maxMult, 0, maxMult);
+    h1_ref3_tofmatch_TPC_kM[i_pt] = new TH1D(Form("h1_ref3_tofmatch_TPC_kM_%d", i_pt), Form("pT: [%1.1f, %1.1f) GeV/c", pt_cut[i_pt], pt_cut[i_pt+1]), maxMult, 0, maxMult);
+    h1_ref3_tofmatch_TOF_kP[i_pt] = new TH1D(Form("h1_ref3_tofmatch_TOF_kP_%d", i_pt), Form("pT: [%1.1f, %1.1f) GeV/c", pt_cut[i_pt], pt_cut[i_pt+1]), maxMult, 0, maxMult);
+    h1_ref3_tofmatch_TOF_kM[i_pt] = new TH1D(Form("h1_ref3_tofmatch_TOF_kM_%d", i_pt), Form("pT: [%1.1f, %1.1f) GeV/c", pt_cut[i_pt], pt_cut[i_pt+1]), maxMult, 0, maxMult);
+
+    h1_ref3StPicoEvt_TPC_raw_kP[i_pt] = new TH1D(Form("h1_ref3StPicoEvt_TPC_raw_kP_%d", i_pt), Form("pT: [%1.1f, %1.1f) GeV/c", pt_cut[i_pt], pt_cut[i_pt+1]), maxMult, 0, maxMult);
+    h1_ref3StPicoEvt_TPC_raw_kM[i_pt] = new TH1D(Form("h1_ref3StPicoEvt_TPC_raw_kM_%d", i_pt), Form("pT: [%1.1f, %1.1f) GeV/c", pt_cut[i_pt], pt_cut[i_pt+1]), maxMult, 0, maxMult);
+    h1_ref3StPicoEvt_TOF_raw_kP[i_pt] = new TH1D(Form("h1_ref3StPicoEvt_TOF_raw_kP_%d", i_pt), Form("pT: [%1.1f, %1.1f) GeV/c", pt_cut[i_pt], pt_cut[i_pt+1]), maxMult, 0, maxMult);
+    h1_ref3StPicoEvt_TOF_raw_kM[i_pt] = new TH1D(Form("h1_ref3StPicoEvt_TOF_raw_kM_%d", i_pt), Form("pT: [%1.1f, %1.1f) GeV/c", pt_cut[i_pt], pt_cut[i_pt+1]), maxMult, 0, maxMult);
+    h1_ref3_tofmatch_TPC_raw_kP[i_pt] = new TH1D(Form("h1_ref3_tofmatch_TPC_raw_kP_%d", i_pt), Form("pT: [%1.1f, %1.1f) GeV/c", pt_cut[i_pt], pt_cut[i_pt+1]), maxMult, 0, maxMult);
+    h1_ref3_tofmatch_TPC_raw_kM[i_pt] = new TH1D(Form("h1_ref3_tofmatch_TPC_raw_kM_%d", i_pt), Form("pT: [%1.1f, %1.1f) GeV/c", pt_cut[i_pt], pt_cut[i_pt+1]), maxMult, 0, maxMult);
+    h1_ref3_tofmatch_TOF_raw_kP[i_pt] = new TH1D(Form("h1_ref3_tofmatch_TOF_raw_kP_%d", i_pt), Form("pT: [%1.1f, %1.1f) GeV/c", pt_cut[i_pt], pt_cut[i_pt+1]), maxMult, 0, maxMult);
+    h1_ref3_tofmatch_TOF_raw_kM[i_pt] = new TH1D(Form("h1_ref3_tofmatch_TOF_raw_kM_%d", i_pt), Form("pT: [%1.1f, %1.1f) GeV/c", pt_cut[i_pt], pt_cut[i_pt+1]), maxMult, 0, maxMult);
+    //15022022(finish)
+
+    h1_ref3StPicoEvt_TPC_pP[i_pt]->Sumw2();
+    h1_ref3StPicoEvt_TPC_pM[i_pt]->Sumw2();
+    h1_ref3StPicoEvt_TOF_pP[i_pt]->Sumw2();
+    h1_ref3StPicoEvt_TOF_pM[i_pt]->Sumw2();
+    h1_ref3_tofmatch_TPC_pP[i_pt]->Sumw2();
+    h1_ref3_tofmatch_TPC_pM[i_pt]->Sumw2();
+    h1_ref3_tofmatch_TOF_pP[i_pt]->Sumw2();
+    h1_ref3_tofmatch_TOF_pM[i_pt]->Sumw2();
+
+    h1_ref3StPicoEvt_TPC_raw_pP[i_pt]->Sumw2();
+    h1_ref3StPicoEvt_TPC_raw_pM[i_pt]->Sumw2();
+    h1_ref3StPicoEvt_TOF_raw_pP[i_pt]->Sumw2();
+    h1_ref3StPicoEvt_TOF_raw_pM[i_pt]->Sumw2();
+    h1_ref3_tofmatch_TPC_raw_pP[i_pt]->Sumw2();
+    h1_ref3_tofmatch_TPC_raw_pM[i_pt]->Sumw2();
+    h1_ref3_tofmatch_TOF_raw_pP[i_pt]->Sumw2();
+    h1_ref3_tofmatch_TOF_raw_pM[i_pt]->Sumw2();
+
+    //15022022(start)
+    h1_ref3StPicoEvt_TPC_piP[i_pt]->Sumw2();
+    h1_ref3StPicoEvt_TPC_piM[i_pt]->Sumw2();
+    h1_ref3StPicoEvt_TOF_piP[i_pt]->Sumw2();
+    h1_ref3StPicoEvt_TOF_piM[i_pt]->Sumw2();
+    h1_ref3_tofmatch_TPC_piP[i_pt]->Sumw2();
+    h1_ref3_tofmatch_TPC_piM[i_pt]->Sumw2();
+    h1_ref3_tofmatch_TOF_piP[i_pt]->Sumw2();
+    h1_ref3_tofmatch_TOF_piM[i_pt]->Sumw2();
+
+    h1_ref3StPicoEvt_TPC_raw_piP[i_pt]->Sumw2();
+    h1_ref3StPicoEvt_TPC_raw_piM[i_pt]->Sumw2();
+    h1_ref3StPicoEvt_TOF_raw_piP[i_pt]->Sumw2();
+    h1_ref3StPicoEvt_TOF_raw_piM[i_pt]->Sumw2();
+    h1_ref3_tofmatch_TPC_raw_piP[i_pt]->Sumw2();
+    h1_ref3_tofmatch_TPC_raw_piM[i_pt]->Sumw2();
+    h1_ref3_tofmatch_TOF_raw_piP[i_pt]->Sumw2();
+    h1_ref3_tofmatch_TOF_raw_piM[i_pt]->Sumw2();
+
+    h1_ref3StPicoEvt_TPC_kP[i_pt]->Sumw2();
+    h1_ref3StPicoEvt_TPC_kM[i_pt]->Sumw2();
+    h1_ref3StPicoEvt_TOF_kP[i_pt]->Sumw2();
+    h1_ref3StPicoEvt_TOF_kM[i_pt]->Sumw2();
+    h1_ref3_tofmatch_TPC_kP[i_pt]->Sumw2();
+    h1_ref3_tofmatch_TPC_kM[i_pt]->Sumw2();
+    h1_ref3_tofmatch_TOF_kP[i_pt]->Sumw2();
+    h1_ref3_tofmatch_TOF_kM[i_pt]->Sumw2();
+
+    h1_ref3StPicoEvt_TPC_raw_kP[i_pt]->Sumw2();
+    h1_ref3StPicoEvt_TPC_raw_kM[i_pt]->Sumw2();
+    h1_ref3StPicoEvt_TOF_raw_kP[i_pt]->Sumw2();
+    h1_ref3StPicoEvt_TOF_raw_kM[i_pt]->Sumw2();
+    h1_ref3_tofmatch_TPC_raw_kP[i_pt]->Sumw2();
+    h1_ref3_tofmatch_TPC_raw_kM[i_pt]->Sumw2();
+    h1_ref3_tofmatch_TOF_raw_kP[i_pt]->Sumw2();
+    h1_ref3_tofmatch_TOF_raw_kM[i_pt]->Sumw2();
+    //15022022(finish)
+
+  }
+  //05022022(finish)
+
+      //15022022(start)
+  h2_ref3StPicoEvt_Npi = new TH2D("h2_ref3StPicoEvt_Npi", "h2_ref3StPicoEvt_Npi", maxMult, 0, maxMult, maxMult, 0, maxMult);
+  h2_ref3StPicoEvt_Nk = new TH2D("h2_ref3StPicoEvt_Nk", "h2_ref3StPicoEvt_Nk", maxMult, 0, maxMult, maxMult, 0, maxMult);
+  h2_ref3_tofmatch_Npi = new TH2D("h2_ref3_tofmatch_Npi", "h2_ref3_tofmatch_Npi", maxMult, 0, maxMult, maxMult, 0, maxMult);
+  h2_ref3_tofmatch_Nk = new TH2D("h2_ref3_tofmatch_Nk", "h2_ref3St_tofmatch_Nk", maxMult, 0, maxMult, maxMult, 0, maxMult);
+      //15022022(finish)
+
+  //04022022(start)
+  hP_np_tofmatch_ZDCx = new TProfile("hP_np_tofmatch_ZDCx", "hP_np_tofmatch_ZDCx", 8000, 6000, 14000);
+  hP_nap_tofmatch_ZDCx = new TProfile("hP_nap_tofmatch_ZDCx", "hP_nap_tofmatch_ZDCx", 8000, 6000, 14000);
+  hP_np_ZDCx = new TProfile("hP_np_ZDCx", "hP_np_ZDCx", 8000, 6000, 14000);
+  hP_nap_ZDCx = new TProfile("hP_nap_ZDCx", "hP_nap_ZDCx", 8000, 6000, 14000);
+  //04022022(finish)
+
+  //track level
+  h1_dca_noCut = new TH1D("h1_dca_noCut", "h1_dca_noCut", 200, 0, 3.5);
+  h1_dca_Cut = new TH1D("h1_dca_Cut", "h1_dca_Cut", 200, 0, 1.5);
+  h1_nHitsFit_noCut = new TH1D("h1_nHitsFit_noCut", "h1_nHitsFit_noCut", 100, -50, 50);
+  h1_nHitsFit_Cut = new TH1D("h1_nHitsFit_Cut", "h1_nHitsFit_Cut", 100, -50, 50);
+  h1_nHitsDedx_noCut = new TH1D("h1_nHitsDedx_noCut", "h1_nHitsDedx_noCut", 100, -50, 50);
+  h1_nHitsDedx_Cut = new TH1D("h1_nHitsDedx_Cut", "h1_nHitsDedx_Cut", 100, -50, 50);
+  h1_nHitsRatio_noCut = new TH1D("h1_nHitsRatio_noCut", "h1_nHitsRatio_noCut", 100, -1.1, 1.1);
+  h1_nHitsRatio_Cut = new TH1D("h1_nHitsRatio_Cut", "h1_nHitsRatio_Cut", 100, -1.1, 1.1);
+  
+  // h2_pDedx = new TH2D("h2_pDedx", "h2_pDedx", 200, -2.5, 2.5, 200, 1.5, 10);
+  // h2_pDedx_pi = new TH2D("h2_pDedx_pi", "h2_pDedx_pi", 200, -2.5, 2.5, 200, 1.5, 7);
+  // h2_pDedx_k = new TH2D("h2_pDedx_k", "h2_pDedx_k", 200, -2.5, 2.5, 200, 1.5, 10);
+  // h2_pDedx_p = new TH2D("h2_pDedx_p", "h2_pDedx_p", 200, -2.5, 2.5, 200, 1.5, 10);
+
+  // h2_ptDedx = new TH2D("h2_ptDedx", "h2_ptDedx", 200, -2.5, 2.5, 200, 1.5, 10);
+  //02022022(start): brough back. Different use
+  h2_ptDedx_pi = new TH2D("h2_ptDedx_pi", "h2_ptDedx_pi", 200, -2.5, 2.5, 200, 1.5, 7);
+  h2_ptDedx_k = new TH2D("h2_ptDedx_k", "h2_ptDedx_k", 200, -2.5, 2.5, 200, 1.5, 10);
+  h2_ptDedx_p = new TH2D("h2_ptDedx_p", "h2_ptDedx_p", 200, -2.5, 2.5, 200, 1.5, 10);
+  h2_ptDedx_exc = new TH2D("h2_ptDedx_exc", "h2_ptDedx_exc", 200, -2.5, 2.5, 200, 1.5, 10);
+
+  h2_ptDedx_tofmatch_pi = new TH2D("h2_ptDedx_tofmatch_pi", "h2_ptDedx_tofmatch_pi", 200, -2.5, 2.5, 200, 1.5, 7);
+  h2_ptDedx_tofmatch_k = new TH2D("h2_ptDedx_tofmatch_k", "h2_ptDedx_tofmatch_k", 200, -2.5, 2.5, 200, 1.5, 10);
+  h2_ptDedx_tofmatch_p = new TH2D("h2_ptDedx_tofmatch_p", "h2_ptDedx_tofmatch_p", 200, -2.5, 2.5, 200, 1.5, 10);
+  h2_ptDedx_tofmatch_exc = new TH2D("h2_ptDedx_tofmatch_exc", "h2_ptDedx_tofmatch_exc", 200, -2.5, 2.5, 200, 1.5, 10);
+  //02022022(finish): brough back. Different use
+
+  
+  // h2_y_pT_piP = new TH2D("h2_y_pT_piP", "h2_y_pT_piP", 200, -1.5, 1.5, 200, 0, 2);
+  // h2_y_pT_kP = new TH2D("h2_y_pT_kP", "h2_y_pT_kP", 200, -1.5, 1.5, 200, 0, 2);
+  // h2_y_pT_pP = new TH2D("h2_y_pT_pP", "h2_y_pT_pP", 200, -1.5, 1.5, 200, 0, 2);
+  // h2_y_pT_piM = new TH2D("h2_y_pT_piM", "h2_y_pT_piM", 200, -1.5, 1.5, 200, 0, 2);
+  // h2_y_pT_kM = new TH2D("h2_y_pT_kM", "h2_y_pT_kM", 200, -1.5, 1.5, 200, 0, 2);
+  // h2_y_pT_pM = new TH2D("h2_y_pT_pM", "h2_y_pT_pM", 200, -1.5, 1.5, 200, 0, 2);
+
+  // h2_y_pT_piP_accCut = new TH2D("h2_y_pT_piP_accCut", "h2_y_pT_piP_accCut", 200, -1., 1., 200, 0, 2);
+  // h2_y_pT_kP_accCut = new TH2D("h2_y_pT_kP_accCut", "h2_y_pT_kP_accCut", 200, -1., 1., 200, 0, 2);
+  // h2_y_pT_pP_accCut = new TH2D("h2_y_pT_pP_accCut", "h2_y_pT_pP_accCut", 200, -1., 1., 200, 0, 2);
+  // h2_y_pT_piM_accCut = new TH2D("h2_y_pT_piM_accCut", "h2_y_pT_piM_accCut", 200, -1., 1., 200, 0, 2);
+  // h2_y_pT_kM_accCut = new TH2D("h2_y_pT_kM_accCut", "h2_y_pT_kM_accCut", 200, -1., 1., 200, 0, 2);
+  // h2_y_pT_pM_accCut = new TH2D("h2_y_pT_pM_accCut", "h2_y_pT_pM_accCut", 200, -1., 1., 200, 0, 2);
+
+
+  return kStOK;
+}
+
+int StQAMaker::Make() {
+
+  if(!mPicoDstMaker) {
+    LOG_WARN << " No PicoDstMaker! Skip! " << endm;
+    return kStWarn;
+  }
+
+  mPicoDst = mPicoDstMaker->picoDst();
+
+  if(!mPicoDst) {
+    LOG_WARN << " No PicoDst! Skip! " << endm;
+    return kStWarn;
+  }
+
+  mPicoEvent = (StPicoEvent*) mPicoDst->event();
+
+  if(!mPicoEvent) return 0; //return just terminates the code here.
+  //10102022(start)
+  if(!(mPicoEvent->isTrigger(600001) || mPicoEvent->isTrigger(600011) || mPicoEvent->isTrigger(600021) || mPicoEvent->isTrigger(600031))) return 0;//19092022: 600001,600011,600021,600031
+  //10102022(finish)
+
+  CurrRun = mPicoEvent->runId();
+  //check if runNo is for Zr or Ru
+  bool IsRunZr = false;
+  bool IsRunRu = false;
+  // string NameRuZr;
+  for(int i_runNo = 0 ; i_runNo < nRunId_Zr ; i_runNo++){//Zr
+    if (CurrRun != IsobarRunId_Zr[i_runNo]) continue;
+    else if (CurrRun == IsobarRunId_Zr[i_runNo]) {// cout<<Form("runNo %d is Zr run", CurrRun)<<endl;
+      IsRunZr = true; NameRuZr = "Zr"; break;}
+  }
+  for(int i_runNo = 0 ; i_runNo < nRunId_Ru ; i_runNo++){//Ru
+    if (CurrRun != IsobarRunId_Ru[i_runNo]) continue;
+    else if (CurrRun == IsobarRunId_Ru[i_runNo]) {// cout<<Form("runNo %d is Ru run", CurrRun)<<endl;
+      IsRunRu = true;  NameRuZr ="Ru"; break;}
+  }
+  if(IsRunZr == false && IsRunRu == false) {// cout<<Form("CANNOT FIND runNo %d's identity!! Zr = false RU = false", CurrRun)<<endl;
+    abort();}
+  else if(IsRunZr == true && IsRunRu == true) {// cout<<Form("CANNOT FIND runNo %d's identity!! Zr = true RU = true", CurrRun)<<endl;
+    abort();}
+
+  //10032023(start)
+  int centrality_ref3[9];
+
+  if(NameRuZr == "Ru"){
+    centrality_ref3[0] = 441;
+    centrality_ref3[1] = 369;
+    centrality_ref3[2] = 259;
+    centrality_ref3[3] = 179;
+    centrality_ref3[4] = 119;
+    centrality_ref3[5] = 76;
+    centrality_ref3[6] = 46;
+    centrality_ref3[7] = 27;
+    centrality_ref3[8] = 15;
+  }
+  else if(NameRuZr == "Zr"){//14022023: just found that it was "Ru"... But should not matter that much
+    centrality_ref3[0] = 437;
+    centrality_ref3[1] = 364;
+    centrality_ref3[2] = 253;
+    centrality_ref3[3] = 172;
+    centrality_ref3[4] = 113;
+    centrality_ref3[5] = 72;
+    centrality_ref3[6] = 43;
+    centrality_ref3[7] = 25;
+    centrality_ref3[8] = 14;
+  }
+  //10032023(finish)
+
+  // // if(EventID == 0){
+  // if(dete_load == 0){
+  //   mDetectorEfficiency->Init_DetEff(Form("/star/u/hsko/pwg/anal/Coll/isobar/ZrZrRuRu200_2018/charge/efficiency/28082021/28082021_1/%s_efficiency.root", NameRuZr.c_str()), Form("/star/u/hsko/pwg/anal/Coll/isobar/ZrZrRuRu200_2018/charge/efficiency/28082021/28082021_1/%s_eff_smear.root", NameRuZr.c_str())); 
+  //   dete_load++;
+  // }
+  //event level
+  //variables
+  TVector3 vertex3 = mPicoEvent->primaryVertex();
+  float bField = mPicoEvent->bField();;
+
+  double ZDCx = 0.;
+
+  int refMultX = 0;
+  int refMultXDiff = 0;
+  int refMultXPlus = 0;
+  int refMultXMinus = 0;
+
+  //22122021(start)
+  int refMultStPicoEvt = 0;
+  //22122021(finish)
+  int refMult3StPicoEvt = 0;
+
+  //02022022(start)
+  int refMult3_sanity = 0;//(|eta| < 1 && nSigmaProton < -3. && m2 < 0.4 GeV2) && pT > 0.1 && |dca| < 3 && nHitsFit >= 10 : ref3StPicoEvt w/o tofmatch
+  int refMult3_tofmatch = 0;//(|eta| < 1 && nSigmaProton < -3. && m2 < 0.4 GeV2) && pT > 0.1 && |dca| < 3 && nHitsFit >= 10 : ref3StPicoEvt w/ tofmatch only
+  int Npi_tofmatch = 0;//(|eta| < 1 && |nSigmaPion| < 2. && m2 > -0.15 GeV2 && m2 < 0.14 GeV2) && pT > 0.1 && |dca| < 3 && nHitsFit >= 10 : for ref3StPicoEvt efficiency correction w/ tofmatch only
+  int Nk_tofmatch = 0;//(|eta| < 1 && |nSigmaKaon| < 2. && m2 > 0.15 GeV2 && m2 < 0.4 GeV2) && pT > 0.1 && |dca| < 3 && nHitsFit >= 10 : for ref3StPicoEvt efficiency correction w/ tofmatch only
+  int Npi = 0;//(|eta| < 1 && |nSigmaPion| < 2. && m2 > -0.15 GeV2 && m2 < 0.14 GeV2) && pT > 0.1 && |dca| < 3 && nHitsFit >= 10 : for ref3StPicoEvt efficiency correction w/o tofmatch
+  int Nk = 0;//(|eta| < 1 && |nSigmaKaon| < 2. && m2 > 0.15 GeV2 && m2 < 0.4 GeV2) && pT > 0.1 && |dca| < 3 && nHitsFit >= 10 : for ref3StPicoEvt efficiency correction w/o tofmatch
+  //02022022(finish)
+
+  //04022022(start)
+  int Np = 0;
+  int Nap = 0;
+  int Np_tofmatch = 0;
+  int Nap_tofmatch = 0;
+  //04022022(finish)
+
+  double epdMult = 0.;
+
+  //mult corr
+  double refMult3_lumicorr = 0.;
+  double refMult3_vzlumicorr = 0.;
+  double epdMult_lumicorr = 0.;
+  double epdMult_vzlumicorr = 0.;
+
+  double refMult3StPicoEvt_lumicorr = 0.; 
+  double refMult3StPicoEvt_vzlumicorr = 0.;
+
+  h1_NoEvt->Fill(0);
+  h1_TPCvz_noCut->Fill(vertex3.Z());
+  h2_TPCvxy_noCut->Fill(vertex3.X(), vertex3.Y());
+  h_TPC_VPD_vz_noCut->Fill(vertex3.Z() - mPicoEvent->vzVpd());
+  // if(mPicoEvent->vzVpd() == -999) return 0;
+  if(!(TMath::Sqrt( TMath::Power((vertex3.X() + 0.), 2) + TMath::Power((vertex3.Y() + 0.), 2)) < 2.)) return 0;
+  h1_NoEvt->Fill(1);
+  if(!(vertex3.Z() > -35. && vertex3.Z() < 25.)) return 0;
+  h1_NoEvt->Fill(2);
+  //26122021(start)
+  if(!(TMath::Abs(vertex3.Z() - mPicoEvent->vzVpd()) < 3.)) return 0;
+  // if(!(TMath::Abs(vertex3.Z() - mPicoEvent->vzVpd()) < 5.)) return 0;
+  //26122021(finish)
+  h1_NoEvt->Fill(3);
+  h1_TPCvz_Cut->Fill(vertex3.Z());
+  h2_TPCvxy_Cut->Fill(vertex3.X(), vertex3.Y());
+  h_TPC_VPD_vz_Cut->Fill(vertex3.Z() - mPicoEvent->vzVpd());  
+  //track level
+  //variables
+  int nPrimaryTrack = 0;
+  int charge = 0;
+  StPicoPhysicalHelix helix;
+  float dca = 0.;
+  float sgnDCAxy = 0.;
+  float sgnDCAz = 0.;
+  // float avgDCAxy = 0.;
+  // float avgDCAz = 0.;
+
+  //10032023(start)
+  int nPrimaryTrack_Cut[9];
+  int counterP[9];
+  int counterAP[9];
+  float avgDCAxy[9];
+  float avgDCAz[9];
+
+  for(int i_cent = 0 ; i_cent < 9 ; i_cent++){
+    nPrimaryTrack_Cut[i_cent] = 0;
+    counterP[i_cent] = 0;
+    counterAP[i_cent] = 0;
+    avgDCAxy[i_cent] = 0.;
+    avgDCAz[i_cent] = 0.;
+  }
+  //10032023(finish)
+
+  int nHitsFit = 0;
+  int nHitsMax = 0;
+  float nHitsRatio = 0.;
+  int nHitsDedx = 0;
+  float dEdx = 0.;
+  TVector3 momentum;
+  float E_pi = 0.; // pi energy
+  float E_K = 0.; // K energy
+  float E_P = 0.; // P energy
+  float eta = 0.;
+  float y_pi = 0.;
+  float y_K = 0.;
+  float y_P = 0.;
+  float nSigmaPion = 0.;
+  float nSigmaKaon = 0.;
+  float nSigmaProton = 0.;
+
+  int pid = 0;
+
+  //TOF
+  StPicoBTofPidTraits *bTOFpid;
+  int bTOFindex = 0;
+  int bTOFmatchFlag = 0;
+  float bTOFyLocal = 0.;
+  float bTOFzLocal = 0.;
+  float bTOFbeta = 0.;
+  float m2 = 0.;
+  int bTOFmult = mPicoEvent->btofTrayMultiplicity(); //No. of hits in TOF trays.
+  int nBTOFMatch = mPicoEvent->nBTOFMatch(); //No. of hits in TOF trays.
+  int beta_eta1 = 0;
+
+  //cuts and booleans
+  bool eta_cut = false;
+  bool PinS = false;
+  bool KnS = false;
+  bool PnS = false;
+  bool PiPt = false;
+  bool KPt = false;
+  bool PPt = false;
+  bool PiPtTOF = false;
+  bool KPtTOF = false;
+  bool PPtTOF = false;
+  bool PiM2 = false;
+  bool KM2 = false;
+  bool PM2 = false;
+  
+  //Tree branches are filled in event level.
+  //Initialize track variables
+  dca_t.clear();
+  nHitsFit_t.clear();
+  nSP_t.clear();
+  m2_t.clear();
+  charge_t.clear();
+  yP_t.clear();
+  pT_t.clear();
+  //26122021(start)
+  dedx_t.clear();
+  //26122021(finish)
+  // pid_t.clear();
+  //deteff_t.clear();
+  //05022022(start)
+  btofmatchflag_t.clear();
+  //05022022(finish)
+
+  ///////
+  //EPD//
+  ///////
+
+  double nHitsE[17]={0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.};//weight
+  double nHitsW[17]={0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.};//weight
+  
+  StEpdGeom *mEpdGeom = new StEpdGeom();
+  int nEpdHits = mPicoDst->numberOfEpdHits();
+
+  double nEpdMIPsE = 0;//East EPD nMIP
+  double nEpdMIPsW = 0;//West EPD nMIP
+  double nEdpMIPsEring[17]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};//East EPD nMIP in each ring
+  double nEdpMIPsWring[17]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};//West EPD nMIP in each ring
+
+  double nEdpMIPsE_rCut = 0;
+  double nEdpMIPsW_rCut = 0;
+
+  double nEdpMIPsEring_nMIPcut[17]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};//East EPD nMIP in each ring for nMIP cut
+  double nEdpMIPsWring_nMIPcut[17]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};//West EPD nMIP in each ring for nMIP cut
+  double nEdpMIPsE_nMIPcut = 0;
+  double nEdpMIPsW_nMIPcut = 0;
+
+  double nEdpMIPsE_rCutnMIPcut = 0;
+  double nEdpMIPsW_rCutnMIPcut = 0;
+
+  for(int i_epd = 0 ; i_epd < nEpdHits ; i_epd++){
+    StPicoEpdHit *mEpdHit = mPicoDst->epdHit(i_epd);
+    if(!mEpdHit) continue;
+    // cout<<Form("nMIP: %2.2f", mEpdHit->nMIP())<<endl;
+    double nMIP = mEpdHit->nMIP();
+    int side_EW = mEpdHit->side(); //+1 for West and -1 for East
+    int ring = mEpdHit->row();
+
+    // if(side_EW == -1) nEpdMIPsE += 1;//East
+    // if(side_EW ==  1) nEpdMIPsW += 1;//West
+
+    // TVector3 StraightLine = mEpdGeom->TileCenter(mEpdHit->id()) - vertex3; // This give eta-phi plot with gap that I don't like (CME group)
+    TVector3 StraightLine = mEpdGeom->RandomPointOnTile(mEpdHit->id()) - vertex3; //Becasue I like this more than TileCenter (CME group)
+
+    double phi_EPD = StraightLine.Phi();
+    double eta_EPD = StraightLine.Eta();
+
+    if(side_EW == -1) {//East
+      // nEpdMIPsE += 1;
+      nEpdMIPsE += nMIP;
+      nEdpMIPsEring[ring - 1] += nMIP;
+      if(nMIP > 0.2) nEdpMIPsEring_nMIPcut[ring - 1] += (nMIP > 5 ? 5 : nMIP);
+      nHitsE[ring-1] +=1;
+    }
+    if(side_EW ==  1) {//West
+      // nEpdMIPsW += 1;
+      nEpdMIPsW += nMIP;
+      nEdpMIPsWring[ring - 1] += nMIP;
+      if(nMIP > 0.2) nEdpMIPsWring_nMIPcut[ring - 1] += (nMIP > 5 ? 5 : nMIP);
+      nHitsW[ring - 1] +=1;
+    }
+    
+  }// for(int i_epd = 0 ; i_epd < nEpdHits ; i_epd++)
+
+  for(int i_ring = 0 ; i_ring < 17 ; i_ring++){
+    // cout<<i_ring<<",\t"<<nHitsE[i_ring] + nHitsW[i_ring]<<endl;
+
+    nEdpMIPsE_nMIPcut += nEdpMIPsEring_nMIPcut[i_ring];
+    nEdpMIPsW_nMIPcut += nEdpMIPsWring_nMIPcut[i_ring];
+    
+    if(i_ring >= 12){//ring >= 13: ring 13 ~ 16 to match the max RefMult3
+      nEdpMIPsE_rCut += nEdpMIPsEring[i_ring];
+      nEdpMIPsW_rCut += nEdpMIPsWring[i_ring];
+
+      nEdpMIPsE_rCutnMIPcut += nEdpMIPsEring_nMIPcut[i_ring];
+      nEdpMIPsW_rCutnMIPcut += nEdpMIPsWring_nMIPcut[i_ring];
+    }
+  }//for(int i_ring = 0 ; i_ring < 17 ; i_ring++)
+
+  ZDCx = mPicoEvent->ZDCx();
+  //22122021(start)
+  refMultStPicoEvt = mPicoEvent->refMult();
+  //22122021(finish)
+  refMult3StPicoEvt = mPicoEvent->refMult3();
+  epdMult = nEdpMIPsE_rCutnMIPcut + nEdpMIPsW_rCutnMIPcut;
+
+  //22122021(start)
+  h2_refMultStPicoEvtbTOFmatch_raw->Fill(refMultStPicoEvt, nBTOFMatch);
+  //22122021(finish)
+  h2_refMult3StPicoEvtbTOFmatch_raw->Fill(refMult3StPicoEvt, nBTOFMatch);
+  h2_EpdMIPbTOFmatch_raw->Fill(epdMult, nBTOFMatch);
+  //22122021(start)
+  h2_EpdMIPrefMultStPicoEvt_raw->Fill(epdMult, refMultStPicoEvt);
+  //22122021(finish)
+  h2_EpdMIPrefMult3StPicoEvt_raw->Fill(epdMult, refMult3StPicoEvt);
+
+  //22122021(start)
+  h2_refMult3StPicoEvtrefMultStPicoEvt_raw->Fill(refMult3StPicoEvt, refMultStPicoEvt);
+  //22122021(finish)
+
+
+  // // //HAND CUT!!! TO REMOVE HIGH MULT IN-TIME PILE UP!!! DANGEROUS??
+  // // if(NameRuZr == "Ru" && (!cut_epd_ru->IsInside(epdMult, nBTOFMatch))) return 0;
+  // // if(NameRuZr == "Zr" && (!cut_epd_zr->IsInside(epdMult, nBTOFMatch))) return 0;
+ 
+  //22122021(start)
+  h2_refMultStPicoEvtbTOFmatch_cut->Fill(refMultStPicoEvt, nBTOFMatch); 
+  //22122021(finish)
+  h2_refMult3StPicoEvtbTOFmatch_cut->Fill(refMult3StPicoEvt, nBTOFMatch); 
+  h2_EpdMIPbTOFmatch_cut->Fill(epdMult, nBTOFMatch);
+  //22122021(start)
+  h2_EpdMIPrefMultStPicoEvt_cut->Fill(epdMult, refMultStPicoEvt);
+  //22122021(finish)
+  h2_EpdMIPrefMult3StPicoEvt_cut->Fill(epdMult, refMult3StPicoEvt);
+  //22122021(start)
+  h2_refMult3StPicoEvtrefMultStPicoEvt_cut->Fill(refMult3StPicoEvt, refMultStPicoEvt);
+  //22122021(finish)
+
+  proton_low_y5_netp=anti_proton_low_y5_netp=proton_high_y5_netp=anti_proton_high_y5_netp=0;
+
+  //10032023(start)
+  //track level only for beta_eta_1 calculation
+  int nTracks = mPicoDst->numberOfTracks();
+  for(int i=0;i<nTracks;i++){
+    mPicoTrack = mPicoDst->track(i);
+    if(!mPicoTrack) continue;
+    if(!mPicoTrack->isPrimary()) continue;
+    nPrimaryTrack++;
+
+    //DCA
+    dca =  mPicoTrack->gDCA(vertex3.X(), vertex3.Y(), vertex3.Z());
+
+    //nhitsfit
+    nHitsFit = mPicoTrack->nHitsFit();
+
+    //momentum
+    momentum = mPicoTrack->pMom();
+
+    //eta
+    eta = momentum.PseudoRapidity();
+
+    //TOF
+    bTOFindex = mPicoTrack->bTofPidTraitsIndex();
+    bTOFmatchFlag = 0;
+    bTOFbeta = 0.;
+    bTOFyLocal = -999.;
+    bTOFzLocal = -999.;
+    if(bTOFindex>=0){
+      bTOFpid = mPicoDst->btofPidTraits(bTOFindex);    
+      bTOFmatchFlag = bTOFpid->btofMatchFlag();
+      if(bTOFpid) {
+  	bTOFbeta = bTOFpid->btofBeta();
+  	bTOFyLocal = bTOFpid->btofYLocal();
+  	bTOFzLocal = bTOFpid->btofZLocal();
+  	// h2_btofYZLocal->Fill(bTOFpid->btofYLocal(), bTOFpid->btofZLocal()); //TOF match cut
+      }
+    }
+
+    if(!(bTOFmatchFlag > 0 && bTOFbeta > 0 && TMath::Abs(bTOFyLocal) < 1.6 && TMath::Abs(bTOFzLocal) < 3.0)){
+      bTOFbeta = -999.;
+    }
+    if(bTOFbeta > 0.1 && TMath::Abs(eta) < 1 && dca < 3 && nHitsFit > 10) beta_eta1++;//02022022: this might not have been working. nHitsFit > 15 filter was put already above.
+  }//track loop for beta_eta1 ends
+  //10032023(finish)
+
+  // track level
+  nTracks = mPicoDst->numberOfTracks();
+  for(int i=0;i<nTracks;i++){
+    mPicoTrack = mPicoDst->track(i);
+    if(!mPicoTrack) continue;
+    if(!mPicoTrack->isPrimary()) continue;
+    nPrimaryTrack++;
+
+    //charge
+    charge = mPicoTrack->charge();
+
+    //DCA
+    dca =  mPicoTrack->gDCA(vertex3.X(), vertex3.Y(), vertex3.Z());
+    // StPicoPhysicalHelix *helix = mPicoTrack->helix(bField);
+    helix = mPicoTrack->helix(bField);
+    sgnDCAxy = helix.geometricSignedDistance(vertex3.X(), vertex3.Y());
+    sgnDCAz = mPicoTrack->gDCAz(vertex3.Z());
+    // avgDCAxy += helix.geometricSignedDistance(vertex3.X(), vertex3.Y());
+    // avgDCAz += sgnDCAz;
+
+    //nhitsfit
+    nHitsFit = mPicoTrack->nHitsFit();
+    //nHitsMax
+    nHitsMax = mPicoTrack->nHitsMax();
+    //nHitsRatio
+    nHitsRatio = 1.*nHitsFit/nHitsMax;
+    //nHitsDedx
+    nHitsDedx = mPicoTrack->nHitsDedx();
+    //dEdx
+    dEdx = mPicoTrack->dEdx();
+
+
+    //momentum
+    momentum = mPicoTrack->pMom();
+    E_pi = TMath::Sqrt(momentum.Mag2() + MPION*MPION);
+    E_K = TMath::Sqrt(momentum.Mag2() + MKAON*MKAON);
+    E_P = TMath::Sqrt(momentum.Mag2() + MPROTON*MPROTON);
+
+    //eta
+    eta = momentum.PseudoRapidity();
+
+    //eta cut
+    eta_cut = TMath::Abs(eta) < 0.5;//BES-I
+
+    //y
+    //collider mode
+    y_pi = 0.5*TMath::Log( (E_pi + momentum.Pz()) / (E_pi - momentum.Pz()) ); // not sure this is how you do... //check the value -1.045
+    y_K = 0.5*TMath::Log( (E_K + momentum.Pz()) / (E_K - momentum.Pz()) );
+    y_P = 0.5*TMath::Log( (E_P + momentum.Pz()) / (E_P - momentum.Pz()) );
+
+    //nSigma
+    nSigmaPion = mPicoTrack->nSigmaPion();
+    nSigmaKaon = mPicoTrack->nSigmaKaon();
+    nSigmaProton = mPicoTrack->nSigmaProton();
+
+    h1_dca_noCut->Fill(dca);
+    h1_nHitsFit_noCut->Fill(charge*nHitsFit);
+    h1_nHitsDedx_noCut->Fill(charge*nHitsDedx);
+    h1_nHitsRatio_noCut->Fill(charge*nHitsRatio);
+
+    //TOF
+    bTOFindex = mPicoTrack->bTofPidTraitsIndex();
+    bTOFmatchFlag = 0;
+    bTOFbeta = 0.;
+    bTOFyLocal = -999.;
+    bTOFzLocal = -999.;
+    if(bTOFindex>=0){
+      bTOFpid = mPicoDst->btofPidTraits(bTOFindex);    
+      bTOFmatchFlag = bTOFpid->btofMatchFlag();
+      if(bTOFpid) {
+  	bTOFbeta = bTOFpid->btofBeta();
+  	bTOFyLocal = bTOFpid->btofYLocal();
+  	bTOFzLocal = bTOFpid->btofZLocal();
+
+  	// h2_btofYZLocal->Fill(bTOFpid->btofYLocal(), bTOFpid->btofZLocal()); //TOF match cut
+      }
+    }
+
+    m2 = momentum.Mag2()*( 1./(bTOFbeta*bTOFbeta) - 1 );
+
+    if(!(bTOFmatchFlag > 0 && bTOFbeta > 0 && TMath::Abs(bTOFyLocal) < 1.6 && TMath::Abs(bTOFzLocal) < 3.0)){
+      bTOFbeta = -999.;
+      m2 = -999.;
+    }
+    if(bTOFbeta > 0.1 && TMath::Abs(eta) < 1 && dca < 3 && nHitsFit > 10) beta_eta1++;//02022022: this might not have been working. nHitsFit > 15 filter was put already above.
+
+    //nSigma cuts
+    //26122021(start)
+    // PinS = TMath::Abs(nSigmaPion - nSigmaPiShift(charge, momentum.Perp())) < 2.;
+    // KnS = TMath::Abs(nSigmaKaon - nSigmaKShift(charge, momentum.Perp())) < 2.;
+    // PnS = TMath::Abs(nSigmaProton - nSigmaPShift(charge, momentum.Perp())) < 2.5;//highest limit for sys. unc. studies
+    PinS = TMath::Abs(nSigmaPion) < 2.;
+    KnS = TMath::Abs(nSigmaKaon) < 2.;
+    PnS = TMath::Abs(nSigmaProton) < 2.5;//highest limit for sys. unc. studies
+    //26122021(finish)
+
+    // //pT cuts
+    // PiPt = momentum.Perp() > 0.4 && momentum.Perp() < 1.6;
+    // KPt = momentum.Perp() > 0.4 && momentum.Perp() < 1.6;
+    // PPt = momentum.Perp() > 0.4 && momentum.Perp() < 1.6;
+
+    //pT cuts for TOF usage
+    PiPtTOF = momentum.Perp() < 0.5;
+    KPtTOF = momentum.Perp() < 0.4;
+    PPtTOF = momentum.Perp() < 0.8;
+
+    //mass cuts
+    PiM2 = m2 > -0.15 && m2 < 0.14;
+    KM2 = m2 > 0.15 && m2 < 0.4;
+    PM2 = m2 > 0.5 && m2 < 1.3;//highest limit for sys. unc. studies
+
+    //03022022(start)
+    //for refMult3
+    if(
+       (TMath::Abs(eta) < 1 && nSigmaProton < -3. && m2 < 0.4) 
+       && momentum.Perp() > 0.1 && TMath::Abs(dca) < 3 && nHitsFit >= 10
+       ) {
+      h2_ptDedx_exc->Fill(charge*momentum.Perp(), dEdx);
+      refMult3_sanity++;
+      if(bTOFmatchFlag > 0 /*tofmatch*/){
+	refMult3_tofmatch++;
+	h2_ptDedx_tofmatch_exc->Fill(charge*momentum.Perp(), dEdx);
+      }
+    }
+    //pi: for refMult3 effciency correction
+    if(
+       (TMath::Abs(eta) < 1 && TMath::Abs(nSigmaPion) < 2. && m2 > -0.15 && m2 < 0.14) 
+       && momentum.Perp() > 0.1 && TMath::Abs(dca) < 3 && nHitsFit >= 10
+       ) {
+      Npi++;
+      h2_ptDedx_pi->Fill(charge*momentum.Perp(), dEdx);
+      if(bTOFmatchFlag > 0) {
+	Npi_tofmatch++;
+	h2_ptDedx_tofmatch_pi->Fill(charge*momentum.Perp(), dEdx);
+      }
+    }
+    //k: for refMult3 effciency correction
+    if(
+       (TMath::Abs(eta) < 1 && TMath::Abs(nSigmaKaon) < 2. && m2 > 0.15 && m2 < 0.4) 
+       && momentum.Perp() > 0.1 && TMath::Abs(dca) < 3 && nHitsFit >= 10
+       ) {
+      Nk++;
+      h2_ptDedx_k->Fill(charge*momentum.Perp(), dEdx);
+      if(bTOFmatchFlag > 0) {
+	Nk_tofmatch++;
+	h2_ptDedx_tofmatch_k->Fill(charge*momentum.Perp(), dEdx);
+      }
+    }
+    //03022022(finish)
+
+    //02022022(start)
+    if(!(nHitsFit > 10)) continue;//lowest limit for sys. unc. studies
+    //02022022(finish)
+    if(!(nHitsDedx > 5)) continue;
+    if(!(nHitsRatio > 0.52)) continue;
+    if(!(TMath::Abs(dca) < 1.2)) continue;//highest limit for sys. unc. studies
+    h1_dca_Cut->Fill(dca);
+    h1_nHitsFit_Cut->Fill(charge*nHitsFit);
+    h1_nHitsDedx_Cut->Fill(charge*nHitsDedx);
+    h1_nHitsRatio_Cut->Fill(charge*nHitsRatio);
+
+
+    //proton
+    if(
+       (PnS)
+       &&
+       (
+  	(PPtTOF)
+  	||
+	//10102022(start)
+  	// ((!PPtTOF) && PM2)
+  	((!PPtTOF) && PM2 && bTOFbeta > 0.1)
+	//10102022(finish)
+  	)
+       ) {
+      pid = 1;
+      dca_t.push_back(dca);
+      nHitsFit_t.push_back(nHitsFit);
+      //26122021(start)
+      // nSP_t.push_back(nSigmaProton - nSigmaPShift(charge, momentum.Perp()));
+      nSP_t.push_back(nSigmaProton);
+      //26122021(finish)
+      m2_t.push_back(m2);
+      charge_t.push_back(charge);
+      yP_t.push_back(y_P);
+      pT_t.push_back(momentum.Perp());
+      //26122021(start)
+      dedx_t.push_back(dEdx);
+      //26122021(finish)
+      // pid_t.push_back(pid);
+      // deteff_t.push_back(deteff);
+      //05022022(start)
+      btofmatchflag_t.push_back(bTOFmatchFlag);
+      //05022022(finish)
+
+      if(momentum.Perp() > 0.4 && momentum.Perp() <= 0.8){
+	if(charge > 0) proton_low_y5_netp++;
+	if(charge < 0) anti_proton_low_y5_netp++;
+      }
+      if((momentum.Perp() > 0.8 && momentum.Perp() < 2.0) && (bTOFbeta > 0.1 && m2 > 0.6 && m2 < 1.2)){
+	if(charge > 0) proton_high_y5_netp++; 
+	if(charge < 0) anti_proton_high_y5_netp++; 
+      }
+
+
+    }//end of proton if
+
+    // if(multi_pid > 1) h2_ptDedx_exc->Fill(charge*momentum.Perp(), dEdx);
+  }//track loop ends
+
+  // //10032023(start)
+  // for(int i_cent = 0 ; i_cent < 9 ; i_cent++){
+  //   if(nPrimaryTrack_Cut[i_cent] != 0){
+  //     avgDCAxy[i_cent]/nPrimaryTrack_Cut[i_cent];
+  //   }
+  // }
+  // //10032023(finish)
+
+  //set tree variable
+  //event level
+  ZDCx_t = ZDCx;
+  vz_t = vertex3.Z();
+  vpdz_t = mPicoEvent->vzVpd();
+  nBTOFMatch_t = nBTOFMatch;
+  //26122021(start)
+  refMultStPicoEvt_t = refMultStPicoEvt;
+  //26122021(finish)
+  refMult3StPicoEvt_t = refMult3StPicoEvt;
+  nEdpMIPsEW_rCutnMIPcut_t = epdMult;
+
+  beta_eta1_t = beta_eta1;
+
+  //10032023(start)
+  for(int i_cent = 0 ; i_cent < 9 ; i_cent++){
+    if(nPrimaryTrack_Cut[i_cent] != 0){
+      avgDCAxy_t[i_cent] = avgDCAxy[i_cent]/nPrimaryTrack_Cut[i_cent];
+      avgDCAz_t[i_cent] = avgDCAz[i_cent]/nPrimaryTrack_Cut[i_cent];
+    }
+    else{
+      avgDCAxy_t[i_cent] = -999;
+      avgDCAz_t[i_cent] = -999;
+    }
+    counterP_t[i_cent] = counterP[i_cent];
+    counterAP_t[i_cent] = counterAP[i_cent];
+  }
+  //10032023(finish)
+
+  //10102022(start)
+  if(beta_eta1 == 0) return 0;//19092022: Ashish: I am also using a cut just for QA purposes, which I think should not matter much. If tofmatchedbeta (all tracks within eta < 0.5 with tofhits and beta>0.1) in an event is zero, I do not include those events in analysis. //moved from "before" the beta_eta1_t = beta_eta1; setting.
+  //10102022(finish)
+
+  // if(nPrimaryTrack != 0){
+  //   avgDCAxy_t = avgDCAxy/nPrimaryTrack;
+  //   avgDCAz_t = avgDCAz/nPrimaryTrack;
+  // }
+  // else {
+  //   avgDCAxy_t = -999;
+  //   avgDCAz_t = -999;
+  // }
+
+  //02022022(start)
+  // cout<<"refMult3StPicoEvt = "<<refMult3StPicoEvt<<endl;
+  // cout<<"refMult3_tofmatch = "<<refMult3_tofmatch<<endl;
+  // cout<<"refMult3_sanity   = "<<refMult3_sanity<<endl;
+  // cout<<"Npi_t = "<<Npi_t<<", Npi_tofmatch_t = "<<Npi_tofmatch_t<<endl;
+  // cout<<"Nk_t = "<<Nk_t<<", Nk_tofmatch_t = "<<Nk_tofmatch_t<<endl;
+  refMult3_tofmatch_t = refMult3_tofmatch;
+  Npi_tofmatch_t = Npi_tofmatch;
+  Nk_tofmatch_t = Nk_tofmatch;
+  Npi_t = Npi;
+  Nk_t = Nk;
+  //02022022(finish)
+
+  //Fill tree in event level
+  t_event->Fill();
+  
+  //26122021(start)
+  h2_refMult3StPicoEvtbetaeta_raw->Fill(refMult3StPicoEvt, beta_eta1);
+  //02022022(start)
+
+
+  //05022022(start)
+  h2_refMult3StPicoEvtbTOFmatch_tofmatch_raw->Fill(refMult3_tofmatch, nBTOFMatch);
+  //05022022(finish)
+
+  // cout<<TPCvx_t<<endl;
+
+  EventID++;
+  return kStOK;
+}
+
+void StQAMaker::Clear(Option_t *opt) {}
+
+int StQAMaker::Finish() {
+  outfile->cd();
+  outfile->Write();
+  outfile->Close();
+  outfile_hist->cd();
+  outfile_hist->Write();
+  outfile_hist->Close();
+
+  return kStOK;
+}

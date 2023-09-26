@@ -1,0 +1,12 @@
+Universe       = vanilla
+Notification   = never
+Requirements   = (CPU_Type != "crs") && (CPU_Experiment == "star")
++Experiment    = "star"
++Job_Type      = "cas"
+Priority       = +10
+GetEnv         = true
+Executable = /star/u/hsko/anal/Coll/isobar/ZrZrRuRu200_2018/charge/cum/effcorr/1_DetEff/job/Data/19118005/19118005.csh
+Log = /star/u/hsko/anal/Coll/isobar/ZrZrRuRu200_2018/charge/cum/effcorr/1_DetEff/job/Data/19118005/job.log
+Output = /star/u/hsko/anal/Coll/isobar/ZrZrRuRu200_2018/charge/cum/effcorr/1_DetEff/job/Data/19118005/job.out
+Error = /star/u/hsko/anal/Coll/isobar/ZrZrRuRu200_2018/charge/cum/effcorr/1_DetEff/job/Data/19118005/job.err
+Queue
