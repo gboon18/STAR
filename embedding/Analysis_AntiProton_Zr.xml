@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- <job inputOrder="runnumber" splitBy="runnumber" maxFilesPerProcess="30" softLimits="true" simulateSubmission="false" fileListSyntax="xrootd"> -->
+<!-- <job name="isobar200GeV_runQA" inputOrder="runnumber" splitBy="runnumber" maxFilesPerProcess="200" softLimits="false" simulateSubmission="false" fileListSyntax="xrootd"> -->
+<job name="isobar200GeV_cum" maxFilesPerProcess="20" softLimits="false" simulateSubmission="false">
+  <stdout discard="true" />
+
+  <!-- <input URL="filelist:&goodRunList;"/> -->
+
+  
+  <stderr URL="file:&logDir;/$JOBID.err"/>
+  <stdout URL="file:&logDir;/$JOBID.out"/>
+  <stdout URL="file:&logDir;/$JOBID.log"/>
+  <!-- <output fromScratch="*.root" toURL="file:&outDir;/" /> -->
+  <!--output fromScratch="*.log" toURL="file:/xxx/test/" />-->
+
+
+  <command>
+    <!-- make eff -->
+    <!-- ./eff_main job/Data/&runNo;/file.list -->
+    starver SL19b 
+    ./runmakeMuDstQA.csh AntiProton_embedding_Zr.list 1107 0 &outDir;/AntiProton_Zr_dca_&dca_cut;_nhitsfit_&nhitsfit_cut;.root 15 &dca_cut; &nhitsfit_cut; &thisNameRuZr;
+  </command> 
+
+  <SandBox installer="ZIP">
+    <Package>
+      <File>file:./.sl73_gcc485</File>
+      <File>file:./RunNo.h</File>
+      <File>file:./ref3StPicoEvtpileup.h</File>
+      <File>file:./AntiProton_embedding_Zr.list</File>
+      <File>file:./runmakeMuDstQA.csh</File>
+      <File>file:./runmakeMuDstQA.C</File>
+      <File>file:./makeMuDstQA.C</File>
+      <File>file:./Analysis_AntiProton_Zr.xml</File>    <!-- Only so we can print it out ... done above -->
+    </Package>
+  </SandBox>
+
+
+  <Generator>
+    <Location>&schedDir;</Location>
+    <ReportLocation>&schedDir;</ReportLocation>
+  </Generator>
+</job>

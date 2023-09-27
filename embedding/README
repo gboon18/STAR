@@ -1,0 +1,12 @@
+how run:
+./runmakeMuDstQA.csh <embedding list> <number of files in the embeding list> <number of events. 0: all> <output root file name> <14: proton, 15: anti-proton> <dca cut X 10> <nhitsfit cut> <Ru or Zr>
+./runmakeMuDstQA.csh Proton_embedding_Ru.list 3608 0 <output root file name> 14 10 20 Ru
+./runmakeMuDstQA.csh AntiProton_embedding_Ru.list 1203 0 <output root file name> 15 10 20 Zr
+
+03082023
+Not much proton embedding but new embeddings!. 
+No new antiproton embedding yet.
+This run is essiencially to check the vz dependence of y-pt efficiency.
+
+./runmakeMuDstQA.csh Proton_embedding_new.list 1540 0 RuZr_proton_Rucent.root 14 10 20 Ru  
+./runmakeMuDstQA.csh Proton_embedding_new.list 1540 0 RuZr_proton_Zrcent.root 14 10 20 Zr  
